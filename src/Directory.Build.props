@@ -1,10 +1,14 @@
 ﻿<Project>
     <PropertyGroup>
+        <LangVersion>14</LangVersion>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        
         <UseArtifactsOutput>true</UseArtifactsOutput>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-        <LangVersion>14</LangVersion>
+
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
         <IPRestrictionsTargetFrameworks>net7.0;net9.0;net10.0</IPRestrictionsTargetFrameworks>
@@ -16,8 +20,14 @@
         <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AspNetCore.IPRestrictions.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <Authors>Jeremy Morren</Authors>
+        <Copyright>Copyright © Jeremy Morren 2026</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
     <ItemGroup>
-        <None Include="$(MSBuildThisFileDirectory)README.md" 
+        <None Include="$(MSBuildThisFileDirectory)../README.md" 
               Pack="true" PackagePath="" 
               Visible="false" />
     </ItemGroup>

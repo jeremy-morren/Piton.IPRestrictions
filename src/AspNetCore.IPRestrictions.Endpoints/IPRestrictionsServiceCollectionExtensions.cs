@@ -1,5 +1,8 @@
 ﻿namespace AspNetCore.IPRestrictions.Endpoints;
 
+/// <summary>
+/// Extension methods for <see cref="IServiceCollection"/> to add IP restrictions services.
+/// </summary>
 public static class IPRestrictionsServiceCollectionExtensions
 {
     /// <param name="services">The <see cref="IServiceCollection"/> to add the services to</param>

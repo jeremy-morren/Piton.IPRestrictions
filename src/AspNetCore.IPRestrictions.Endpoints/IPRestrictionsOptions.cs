@@ -1,10 +1,11 @@
 ﻿using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 
+// Before .NET 11, IPNetwork is the backport in IPNetwork.cs
+
 #if NET11_0_OR_GREATER
 using IPNetwork = System.Net.IPNetwork;
 #endif
-// Before .NET 11, IPNetwork is the backport in IPNetwork.cs
 
 namespace AspNetCore.IPRestrictions.Endpoints;
 

@@ -1,5 +1,8 @@
 ﻿namespace AspNetCore.IPRestrictions.Endpoints;
 
+/// <summary>
+/// Extension methods for <see cref="IEndpointConventionBuilder"/> to add IP restrictions to endpoints.
+/// </summary>
 public static class IPRestrictionsEndpointConventionBuilderExtensions
 {
     /// <summary>

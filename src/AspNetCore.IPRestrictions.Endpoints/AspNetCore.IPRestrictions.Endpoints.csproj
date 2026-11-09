@@ -8,8 +8,11 @@
         <LangVersion>14</LangVersion>
         
         <IsPackable>true</IsPackable>
+    </PropertyGroup>
+    
+    <PropertyGroup>
         <PackageId>AspNetCore.IPRestrictions.Endpoints</PackageId>
-        <Description>Adds per-endpoint IP restrictions to ASP.Net Core</Description>
+        <Description>A middleware that provides per-endpoint IP restrictions (safelist). It can be configured using single IP address or ranges, and supports a predicate to allow for more complex filtering</Description>
     </PropertyGroup>
     
     <ItemGroup>

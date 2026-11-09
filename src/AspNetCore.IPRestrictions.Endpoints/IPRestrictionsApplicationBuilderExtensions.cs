@@ -1,5 +1,8 @@
 ﻿namespace AspNetCore.IPRestrictions.Endpoints;
 
+/// <summary>
+/// Extension methods for <see cref="IApplicationBuilder"/> to add the IP Restrictions middleware.
+/// </summary>
 public static class IPRestrictionsApplicationBuilderExtensions
 {
     /// <summary>

@@ -11,6 +11,9 @@ public sealed class RestrictIPAttribute : Attribute
     public override string ToString() =>
         Predicate != null ? "RestrictIP (Predicate)" : "RestrictIP";
 
+    /// <summary>
+    /// Indicates that client IP restrictions should be applied to the action or controller
+    /// </summary>
     public RestrictIPAttribute() {}
 
     /// <summary>

@@ -86,6 +86,22 @@ app.MapControllers().RestrictIP(context => context.Request.Method != HttpMethods
 
 ### Forwarded Headers
 
-When behind a reverse proxy, the remote address will always be the proxy's address unless forwarded headers are enabled. Since .NET 8, forwarded headers are only applied for known proxies. If your reverse proxy is not in the list of known proxies, you must configure it:
+There are 2 things to be aware of when using this library behind a reverse proxy:
+- Many reverse proxies (like Nginx, Cloudflare and Envoy) **append** (not override) the original client IP address 
+  to the `X-Forwarded-For` header, allowing a client to spoof their IP address by adding a fake `X-Forwarded-For` header.
+- Since .NET 8, forwarded headers are only applied for known proxies. If your reverse proxy is not in the list of known 
+  proxies, the forwarded headers middleware will not apply the forwarded headers.
+
+To help with this, the library contains 2 helper functions:
+- `ConfigureForReverseProxy` - configures the forwarded headers options for a specific reverse proxy.
+- `AddKnownIPNetwork` - adds the correct value to `ForwardedHeadersOptions.KnownIPNetworks` for some known environments.
 
 ```csharp
+app.UseForwardedHeaders(new ForwardedHeadersOptions()
+    {
+        // Expose the original protocol and client IP address to the application
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    }
+    .ConfigureForReverseProxy(ReverseProxy.YourProxy) // Configure for the specific reverse proxy you are using
+    .AddKnownIPNetwork(); // Add the correct value to ForwardedHeadersOptions.KnownIPNetworks for the current environment
+```
