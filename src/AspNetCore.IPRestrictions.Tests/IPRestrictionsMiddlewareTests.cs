@@ -286,6 +286,26 @@ public class IPRestrictionsMiddlewareTests
     }
 
     [Fact]
+    public void RegisterMiddlewareInOrderShouldNotThrow()
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        builder.Services.AddIPRestrictions();
+
+        var app = builder.Build();
+
+        // After routing, before authentication
+        app.UseRouting();
+
+        Action registerMiddleware = () => app.UseIPRestrictions();
+        registerMiddleware.Should().NotThrow();
+
+        app.UseAuthentication();
+    }
+
+    // UseIPRestrictions only checks the middleware order from .NET 7
+#if NET7_0_OR_GREATER
+    [Fact]
     public void RegisterMiddlewareBeforeRoutingShouldThrow()
     {
         var builder = WebApplication.CreateBuilder();
@@ -324,6 +344,7 @@ public class IPRestrictionsMiddlewareTests
         registerMiddleware.Should().Throw<InvalidOperationException>()
             .WithMessage("The IPRestrictionsMiddleware must be added before the authentication middleware");
     }
+#endif
 
     [Theory]
     [InlineData("127.0.0.1", "127.0.0.1")]

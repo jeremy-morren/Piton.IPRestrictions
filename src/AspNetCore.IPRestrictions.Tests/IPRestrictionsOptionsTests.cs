@@ -198,11 +198,15 @@ public class IPRestrictionsOptionsTests
     {
         public List<(LogLevel Level, string Message)> Entries { get; } = [];
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
         public bool IsEnabled(LogLevel logLevel) => true;
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             => Entries.Add((logLevel, formatter(state, exception)));
+
+#if NET7_0_OR_GREATER
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+#else
+        public IDisposable BeginScope<TState>(TState state) => null!;
+#endif
     }
 }

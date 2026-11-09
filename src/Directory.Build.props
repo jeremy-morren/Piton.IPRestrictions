@@ -11,7 +11,14 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
-        <IPRestrictionsTargetFrameworks>net7.0;net9.0;net10.0</IPRestrictionsTargetFrameworks>
+        <!-- 
+            NET 6: The floor.
+            NET 7: Middleware properties added, enabling checking whether UseRouting() and UseAuthentication() are called.
+            NET 8: AOT and configuration binding source generator.
+            NET 9: Static web assets
+            NET 10: The ceiling for now, to be updated to .NET 11
+        -->
+        <IPRestrictionsTargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0</IPRestrictionsTargetFrameworks>
     </PropertyGroup>
 
     <!-- Strong naming: every assembly in the repo is signed with the same key -->
@@ -24,6 +31,7 @@
         <Authors>Jeremy Morren</Authors>
         <Copyright>Copyright © Jeremy Morren 2026</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Description>A middleware that provides per-endpoint IP restrictions (safelist). It can be configured using single IP address or ranges, and supports a predicate to allow for more complex filtering</Description>
     </PropertyGroup>
 
     <ItemGroup>

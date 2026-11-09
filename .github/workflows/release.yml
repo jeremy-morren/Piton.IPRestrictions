@@ -1,0 +1,78 @@
+name: Release
+
+# draft.yml drafts a release for every green push to main; publishing that draft is the release
+# decision, and this pushes the package it carries to NuGet.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Push to NuGet
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # NuGet trusted publishing exchanges the workflow's OIDC token for a short-lived API key.
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+      PACKAGE_ID: AspNetCore.IPRestrictions.Endpoints
+    steps:
+      - name: Download the package from the release
+        run: gh release download "$TAG" --pattern '*.nupkg' --dir package
+
+      # The draft carried the package built from that commit; a tag that disagrees with it means
+      # the release was assembled by hand, and pushing a wrong version to NuGet cannot be undone.
+      - name: Check the package matches the tag
+        id: package
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          matches=()
+          for nupkg in package/"$PACKAGE_ID".*.nupkg; do
+            # What follows the id must be the version separator and a digit.
+            rest=$(basename "$nupkg" .nupkg)
+            rest=${rest#"$PACKAGE_ID".}
+            case "$rest" in [0-9]*) matches+=("$nupkg") ;; esac
+          done
+          if [ "${#matches[@]}" -ne 1 ]; then
+            echo "Expected exactly one $PACKAGE_ID package on release $TAG, found ${#matches[@]}:" >&2
+            for match in "${matches[@]}"; do echo "  $match" >&2; done
+            exit 1
+          fi
+          version=$(basename "${matches[0]}" .nupkg)
+          version=v${version#"$PACKAGE_ID".}
+          if [ "$version" != "$TAG" ]; then
+            echo "$PACKAGE_ID is $version but the release is tagged $TAG" >&2
+            exit 1
+          fi
+          echo "path=${matches[0]}" >> "$GITHUB_OUTPUT"
+          echo "Publishing $PACKAGE_ID $version"
+
+      # Install the dotnet SDK for the NuGet CLI
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      # Get a short-lived NuGet API key
+      - name: NuGet login (Trusted Publishing)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          PACKAGE: ${{ steps.package.outputs.path }}
+        run: |
+          dotnet nuget push "$PACKAGE" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "$NUGET_API_KEY" \
+            --skip-duplicate

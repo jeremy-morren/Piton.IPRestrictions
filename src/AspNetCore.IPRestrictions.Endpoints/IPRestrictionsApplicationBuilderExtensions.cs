@@ -16,9 +16,13 @@ public static class IPRestrictionsApplicationBuilderExtensions
     /// </remarks>
     public static IApplicationBuilder UseIPRestrictions(this IApplicationBuilder app)
     {
+#if NET7_0_OR_GREATER
+        // From .NET 7 onwards, the application builder methods add a marker to the application builder properties
+        // to indicate that the routing and authentication middleware have been added.
+        
         const string routingMiddlewareKey = "__EndpointRouteBuilder";
         const string authenticationMiddlewareKey = "__AuthenticationMiddlewareSet";
-
+        
         if (!app.Properties.ContainsKey(routingMiddlewareKey))
             throw new InvalidOperationException(
                 $"The {nameof(IPRestrictionsMiddleware)} must be added after the routing middleware");
@@ -26,6 +30,7 @@ public static class IPRestrictionsApplicationBuilderExtensions
         if (app.Properties.ContainsKey(authenticationMiddlewareKey))
             throw new InvalidOperationException(
                 $"The {nameof(IPRestrictionsMiddleware)} must be added before the authentication middleware");
+#endif
 
         const string middlewareKey = "__IPRestrictionsMiddlewareSet";
 

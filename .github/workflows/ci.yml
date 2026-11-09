@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  pull_request:
+  # draft.yml runs the same build and tests before it drafts a release.
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    # A newer push to the same pull request (or branch) supersedes this run.
+    concurrency:
+      group: ci-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      # publish-unit-test-result-action writes a check run and, on a pull request, a comment.
+      checks: write
+      pull-requests: write
+    env:
+      results: src/artifacts/test-results
+      coverage: src/artifacts/coverage
+      solution: src/AspNetCore.IPRestrictions.slnx
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install .NET SDKs
+        uses: actions/setup-dotnet@v6
+        with:
+          # 6.0, 7.0, 8.0 and 9.0 are here for their runtimes: the tests run on every target framework.
+          # global.json pins the SDK that builds.
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore ${{ env.solution }}
+
+      # GeneratePackageOnBuild: the build also produces the package.
+      - name: Build
+        run: dotnet build ${{ env.solution }} --no-restore -c Release
+
+      - name: Test (net6.0, net7.0, net8.0, net9.0 and net10.0)
+        run: >-
+          dotnet test ${{ env.solution }} --no-build -c Release
+          --collect "Code Coverage;Format=cobertura"
+          --logger trx
+          --results-directory "${{ env.results }}"
+
+      # Merges the per-framework reports. The collector covers every module with symbols, so the report
+      # keeps the library only, and drops source-generated files (e.g. the logging generator's).
+      - name: Coverage report
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5
+        if: ${{ !cancelled() }}
+        with:
+          reports: ${{ env.results }}/**/*.cobertura.xml
+          targetdir: ${{ env.coverage }}
+          reporttypes: MarkdownSummaryGithub;Cobertura
+          assemblyfilters: +AspNetCore.IPRestrictions.Endpoints
+          filefilters: -*.g.cs
+          title: Code coverage
+
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: cat "${{ env.coverage }}/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # Writes the test summary to the job summary, a check run, and a pull request comment it edits on each run.
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ !cancelled() }}
+        with:
+          check_name: Test results
+          files: ${{ env.results }}/**/*.trx
+
+      - name: Comment coverage on the pull request
+        uses: marocchino/sticky-pull-request-comment@v3
+        # A pull request from a fork gets a read-only token, so there is nothing to comment with.
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+        with:
+          header: coverage
+          path: ${{ env.coverage }}/SummaryGithub.md
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: ${{ env.results }}/**/*.trx
+
+      - name: Upload code coverage
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage
+          path: ${{ env.coverage }}
+
+      - name: Upload package
+        uses: actions/upload-artifact@v7
+        with:
+          name: package
+          path: src/artifacts/package/release/*.nupkg
+          if-no-files-found: error

@@ -8,14 +8,19 @@
         <LangVersion>14</LangVersion>
         
         <IsPackable>true</IsPackable>
-    </PropertyGroup>
-    
-    <PropertyGroup>
+        
         <PackageId>AspNetCore.IPRestrictions.Endpoints</PackageId>
-        <Description>A middleware that provides per-endpoint IP restrictions (safelist). It can be configured using single IP address or ranges, and supports a predicate to allow for more complex filtering</Description>
     </PropertyGroup>
     
     <ItemGroup>
         <InternalsVisibleTo Include="AspNetCore.IPRestrictions.Tests"/>
     </ItemGroup>
+
+    <!-- Native AOT for ASP.NET Core starts at .NET 8, as does the configuration binding source generator -->
+    <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+        <!-- Also sets IsTrimmable, and enables the trim, AOT and single-file analyzers -->
+        <IsAotCompatible>true</IsAotCompatible>
+        <!-- Replaces the reflection-based BindConfiguration with generated code -->
+        <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    </PropertyGroup>
 </Project>

@@ -18,7 +18,7 @@
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.4"/>
         <PackageReference Include="FluentAssertions" Version="8.11.0" />
-        <!-- Last versions supporting net7.0 (xunit.v3 2.0, xunit.runner.visualstudio 3.1 and Microsoft.NET.Test.Sdk 17.14 require net8.0) -->
+        <!-- Last versions supporting net6.0 (xunit.v3 2.0, xunit.runner.visualstudio 3.1 and Microsoft.NET.Test.Sdk 17.14 require net8.0) -->
         <PackageReference Include="xunit.v3" Version="1.1.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
@@ -32,9 +32,17 @@
         <DotnetPackageVersion>9.0.22</DotnetPackageVersion>
         <ExtensionsPackageVersion>9.0.22</ExtensionsPackageVersion>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+        <DotnetPackageVersion>8.0.33</DotnetPackageVersion>
+        <ExtensionsPackageVersion>8.0.2</ExtensionsPackageVersion>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
         <DotnetPackageVersion>7.0.20</DotnetPackageVersion>
         <ExtensionsPackageVersion>7.0.4</ExtensionsPackageVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+        <DotnetPackageVersion>6.0.20</DotnetPackageVersion>
+        <ExtensionsPackageVersion>6.0.1</ExtensionsPackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

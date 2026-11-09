@@ -62,9 +62,12 @@ public partial class IPRestrictionsOptions
         return true;
     }
 
-    internal List<IPAddress>? AllowedIPAddresses { get; private set; }
+    // Fields, not properties: they are parsed from AllowedIPs, never bound from configuration,
+    // and the configuration binder (and its source generator) only considers properties.
 
-    internal List<IPNetwork>? AllowedIPNetworks { get; private set; }
+    internal List<IPAddress>? AllowedIPAddresses;
+
+    internal List<IPNetwork>? AllowedIPNetworks;
 
     internal void ParseIPAddresses(ILogger<IPRestrictionsOptions>? logger)
     {

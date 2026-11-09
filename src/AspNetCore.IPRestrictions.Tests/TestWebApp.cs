@@ -152,8 +152,12 @@ public class TestWebApp : IAsyncDisposable
             return 10100;
         #elif NET9_0_OR_GREATER
             return 10200;
-        #elif NET7_0_OR_GREATER
+        #elif NET8_0_OR_GREATER
             return 10300;
+        #elif NET7_0_OR_GREATER
+            return 10400;
+        #elif NET6_0_OR_GREATER
+            return 10500;
         #else
             throw new NotImplementedException();
         #endif

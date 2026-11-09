@@ -98,6 +98,7 @@ public static class ForwardedHeadersOptionsIPRestrictionsExtensions
         {
             var network = IPNetwork.Parse(cidr);
 #if NET10_0_OR_GREATER
+            // KnownIPNetworks replaced KnownNetworks in .NET 10
             options.KnownIPNetworks.Add(new System.Net.IPNetwork(network.BaseAddress, network.PrefixLength));
 #else
             options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(network.BaseAddress, network.PrefixLength));

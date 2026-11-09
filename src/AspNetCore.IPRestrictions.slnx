@@ -1,8 +1,13 @@
 <Solution>
+  <Folder Name="/.github/">
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../.github/workflows/draft.yml" />
+    <File Path="../.github/workflows/release.yml" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path="AspNetCore.IPRestrictions.snk" />
     <File Path="Directory.Build.props" />
-    <File Path="global.json" />
+    <File Path="../global.json" />
     <File Path="../README.md" />
   </Folder>
   <Project Path="AspNetCore.IPRestrictions.Endpoints/AspNetCore.IPRestrictions.Endpoints.csproj" />
