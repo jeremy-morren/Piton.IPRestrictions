@@ -1,0 +1,26 @@
+﻿<Project>
+    <PropertyGroup>
+        <UseArtifactsOutput>true</UseArtifactsOutput>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <LangVersion>14</LangVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <IPRestrictionsTargetFrameworks>net7.0;net9.0;net10.0</IPRestrictionsTargetFrameworks>
+    </PropertyGroup>
+
+    <!-- Strong naming: every assembly in the repo is signed with the same key -->
+    <PropertyGroup>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AspNetCore.IPRestrictions.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)README.md" 
+              Pack="true" PackagePath="" 
+              Visible="false" />
+    </ItemGroup>
+
+    <Import Project="$(MSBuildThisFileDirectory)version.props" />
+</Project>

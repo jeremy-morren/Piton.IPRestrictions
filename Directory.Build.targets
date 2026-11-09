@@ -1,0 +1,63 @@
+<Project>
+    <!--
+        Derives $(PublicKey) from $(AssemblyOriginatorKeyFile) at build time.
+        The SDK uses $(PublicKey) for any <InternalsVisibleTo> item without explicit Key metadata,
+        so friend assemblies only need <InternalsVisibleTo Include="Name" />.
+    -->
+    <UsingTask TaskName="GetStrongNamePublicKey"
+               TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <KeyFile ParameterType="System.String" Required="true" />
+            <PublicKey ParameterType="System.String" Output="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System" />
+            <Using Namespace="System.IO" />
+            <Code Type="Fragment" Language="cs"><![CDATA[
+                var blob = File.ReadAllBytes(KeyFile);
+
+                byte[] key;
+                if (blob.Length >= 20 && (blob[0] == 0x07 || blob[0] == 0x06))
+                {
+                    // CSP key blob (sn -k output): BLOBHEADER(8) + RSAPUBKEY(magic, bitlen, pubexp) + modulus + ...
+                    var magic = BitConverter.ToUInt32(blob, 8);
+                    if (magic != 0x32415352 && magic != 0x31415352) // "RSA2" / "RSA1"
+                    {
+                        Log.LogError("'{0}' is not an RSA strong name key file.", KeyFile);
+                        return false;
+                    }
+
+                    var bitLength = BitConverter.ToInt32(blob, 12);
+                    var modulusLength = bitLength / 8;
+
+                    // Strong name public key = PublicKeyBlob header + PUBLICKEYBLOB (signature key, RSA1)
+                    key = new byte[12 + 20 + modulusLength];
+                    BitConverter.GetBytes(0x00002400).CopyTo(key, 0);        // SigAlgID: CALG_RSA_SIGN
+                    BitConverter.GetBytes(0x00008004).CopyTo(key, 4);        // HashAlgID: CALG_SHA1
+                    BitConverter.GetBytes(20 + modulusLength).CopyTo(key, 8);
+                    key[12] = 0x06;                                          // PUBLICKEYBLOB
+                    key[13] = 0x02;                                          // CUR_BLOB_VERSION
+                    BitConverter.GetBytes(0x00002400).CopyTo(key, 16);       // aiKeyAlg: CALG_RSA_SIGN
+                    BitConverter.GetBytes(0x31415352).CopyTo(key, 20);       // "RSA1"
+                    Array.Copy(blob, 12, key, 24, 8 + modulusLength);        // bitlen, pubexp, modulus
+                }
+                else
+                {
+                    // Already a strong name public key (sn -p output), e.g. for delay signing
+                    key = blob;
+                }
+
+                PublicKey = BitConverter.ToString(key).Replace("-", "").ToLowerInvariant();
+            ]]></Code>
+        </Task>
+    </UsingTask>
+
+    <Target Name="SetPublicKeyFromKeyFile"
+            BeforeTargets="GetAssemblyAttributes"
+            Condition="'$(SignAssembly)' == 'true' and '$(AssemblyOriginatorKeyFile)' != '' and '$(PublicKey)' == ''">
+        <GetStrongNamePublicKey KeyFile="$(AssemblyOriginatorKeyFile)">
+            <Output TaskParameter="PublicKey" PropertyName="PublicKey" />
+        </GetStrongNamePublicKey>
+    </Target>
+</Project>

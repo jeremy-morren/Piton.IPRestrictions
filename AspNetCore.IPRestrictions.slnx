@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="AspNetCore.IPRestrictions.snk" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="AspNetCore.IPRestrictions.Endpoints/AspNetCore.IPRestrictions.Endpoints.csproj" />
+  <Project Path="AspNetCore.IPRestrictions.Tests/AspNetCore.IPRestrictions.Tests.csproj" />
+</Solution>

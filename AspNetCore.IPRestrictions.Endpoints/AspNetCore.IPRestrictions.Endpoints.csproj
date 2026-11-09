@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(IPRestrictionsTargetFrameworks)</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <OutputType>library</OutputType>
+        <LangVersion>14</LangVersion>
+        
+        <IsPackable>true</IsPackable>
+        <PackageId>AspNetCore.IPRestrictions.Endpoints</PackageId>
+        <Description>Adds per-endpoint IP restrictions to ASP.Net Core</Description>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="AspNetCore.IPRestrictions.Tests"/>
+    </ItemGroup>
+</Project>
