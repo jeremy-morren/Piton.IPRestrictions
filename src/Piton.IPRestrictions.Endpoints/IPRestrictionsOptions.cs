@@ -15,9 +15,9 @@ namespace Piton.IPRestrictions.Endpoints;
 public partial class IPRestrictionsOptions
 {
     /// <summary>
-    /// Whether endpoint IP Restrictions middleware is enabled. Default is <see langword="true" />.
+    /// The IP restriction mode. Default is <see cref="IPRestrictionMode.Enabled"/>.
     /// </summary>
-    public IPRestrictionMode Enabled { get; set; } = IPRestrictionMode.Enabled;
+    public IPRestrictionMode Mode { get; set; } = IPRestrictionMode.Enabled;
 
     /// <summary>
     /// A list of IP addresses or IP address ranges that are allowed to access the application.
@@ -33,15 +33,9 @@ public partial class IPRestrictionsOptions
     /// Whether to allow loopback IP addresses in addition to <see cref="AllowedIPs" />. Default is <see langword="true" />
     /// </summary>
     public bool AllowLoopbackIPs { get; set; } = true;
-
-    /// <summary>
-    /// If true, the middleware will add a header with the name specified in <see cref="RemoteEndpointHeaderName"/>
-    /// and the value of the remote IP address to all HTTP responses.
-    /// </summary>
-    public bool AddRemoteEndpointHeader { get; set; }
     
     /// <summary>
-    /// The name of the header to add to the response when <see cref="AddRemoteEndpointHeader"/> is true.
+    /// The name of the header to add to the response when <see cref="Mode"/> includes <see cref="IPRestrictionMode.AddEndpointHeader"/>.
     /// The default is <c>X-Remote-Endpoint</c>.
     /// </summary>
     public string RemoteEndpointHeaderName { get; set; } = "X-Remote-Endpoint";
@@ -65,10 +59,11 @@ public partial class IPRestrictionsOptions
 
     internal bool Validate()
     {
-        if (Enabled != IPRestrictionMode.Disabled && 
-            Enabled != IPRestrictionMode.AddEndpointHeader && 
-            Enabled != IPRestrictionMode.Enabled)
-            throw new Exception($"{GetType().Name}.{nameof(Enabled)}: unexpected value {Enabled}");
+        // Any combination of the flags
+        const IPRestrictionMode allModes =
+            IPRestrictionMode.Disabled | IPRestrictionMode.AddEndpointHeader | IPRestrictionMode.Enabled;
+        if ((Mode & ~allModes) != 0)
+            throw new Exception($"{GetType().Name}.{nameof(Mode)}: unexpected value {Mode}");
         
         if (string.IsNullOrEmpty(RemoteEndpointHeaderName))
             throw new Exception($"{GetType().Name}.{nameof(RemoteEndpointHeaderName)} cannot be null or empty");
@@ -147,7 +142,8 @@ public partial class IPRestrictionsOptions
             return;
 
         // No valid IP addresses or networks found, log message
-        if (Enabled == IPRestrictionMode.Enabled)
+        // Restrictions are applied when Enabled is set, unless Disabled is too
+        if ((Mode & (IPRestrictionMode.Disabled | IPRestrictionMode.Enabled)) == IPRestrictionMode.Enabled)
             LogNoAllowedIPAddressesOrNetworksFoundAllRequestsWillBeDenied(logger, GetType().FullName);
         else
             LogNoAllowedIPAddressesOrNetworksFoundMiddlewareIsDisabled(logger, GetType().FullName);

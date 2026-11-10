@@ -36,19 +36,26 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
     public Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         var options = _options.CurrentValue;
+        
+        if (HasFlag(options.Mode, IPRestrictionMode.Disabled))
+        {
+            // The middleware is disabled
+            LogIPRestrictionsMiddlewareIsDisabledAllowingAllRequests();
+            return next(context);
+        }
 
-        // Add the remote endpoint header if configured to do so, even if the middleware is disabled
         var remoteIp = context.Connection.RemoteIpAddress;
-        if (options.Enabled is IPRestrictionMode.AddEndpointHeader or IPRestrictionMode.Enabled 
-            && options.AddRemoteEndpointHeader
-            && remoteIp != null)
+        
+        // Add the remote endpoint header if configured to do so
+        if (HasFlag(options.Mode, IPRestrictionMode.AddEndpointHeader) && remoteIp != null)
         {
             context.Response.Headers[options.RemoteEndpointHeaderName] = remoteIp.ToString();
             LogAddedXRemoteEndpointHeader(options.RemoteEndpointHeaderName, remoteIp);
         }
         
-        if (options.Enabled != IPRestrictionMode.Enabled)
+        if (!HasFlag(options.Mode, IPRestrictionMode.Enabled))
         {
+            // The middleware is not enabled, so don't apply any IP restrictions
             LogIPRestrictionsMiddlewareIsDisabledAllowingAllRequests();
             return next(context);
         }
@@ -61,8 +68,7 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
         }
 
         var (displayName, path) = (GetEndpointDisplayName(endpoint), context.Request.Path);
-        if (_logger.IsEnabled(LogLevel.Trace))
-            LogProcessingRequestForEndpointPath(displayName, path);
+        LogProcessingRequestForEndpointPath(displayName, path);
 
         if (!HasRestrictIPAttribute(endpoint.Metadata, out var predicate))
         {
@@ -196,6 +202,8 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
         
         return endpoint.ToString();
     }
+    
+    private static bool HasFlag(IPRestrictionMode mode, IPRestrictionMode flag) => (mode & flag) == flag;
 
     [LoggerMessage(10, LogLevel.Trace, "Added remote endpoint header {HeaderName} with value {RemoteIp}")]
     partial void LogAddedXRemoteEndpointHeader(string headerName, IPAddress remoteIp);

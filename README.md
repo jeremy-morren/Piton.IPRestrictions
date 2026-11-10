@@ -96,15 +96,49 @@ app.MapControllers().RestrictIP(context => context.Request.Method != HttpMethods
 
 ```
 
+### Mode
+
+`IPRestrictionsOptions.Mode` is a combination of flags:
+
+| Flag                | Effect                                                                                     |
+|:--------------------|:-------------------------------------------------------------------------------------------|
+| `Enabled`           | Applies the IP restrictions. The default.                                                  |
+| `AddEndpointHeader` | Adds the client IP address to every response, in the `RemoteEndpointHeaderName` header.    |
+| `Disabled`          | Turns the middleware off entirely (no restrictions and no header), whatever else is set.   |
+
+To enable the restrictions and add the header, set `Mode` to `Enabled | AddEndpointHeader`. To disable the middleware 
+entirely, set `Mode` to `Disabled`.
+
+### Configuration
+
+`AddIPRestrictions()` binds the options from the `IPRestrictions` configuration section (or another section, given
+as an argument), and follows configuration reloads, so for example `appsettings.json`:
+
+```json
+{
+  "IPRestrictions": {
+    "Mode": "Enabled, AddEndpointHeader",
+    "AllowedIPs": [
+      "8.8.8.8",
+      "198.51.100.0/24",
+      "2001:db8::/32"
+    ],
+    "AllowLanIPs": false,
+    "AllowLoopbackIPs": true
+  }
+}
+```
+
+
 ### Forwarded Headers
 
-There are 2 things to be aware of when using this library behind a reverse proxy:
+There are two things to be aware of when using this library behind a reverse proxy:
 - Many reverse proxies (like Nginx, Cloudflare and Envoy) **append** (not override) the original client IP address 
   to the `X-Forwarded-For` header, allowing a client to spoof their IP address by adding a fake `X-Forwarded-For` header.
 - Since .NET 8, forwarded headers are only applied for known proxies. If your reverse proxy is not in the list of known 
   proxies, the forwarded headers middleware will not apply the forwarded headers.
 
-To help with this, the library contains 2 helper functions:
+To help with this, the library contains two helper functions:
 - `ConfigureForReverseProxy` - configures the forwarded headers options for a specific reverse proxy (see [Reverse Proxies](#reverse-proxies) below)
 - `AddKnownNetworkForCurrentEnvironment` - adds the correct value to `ForwardedHeadersOptions.KnownIPNetworks` for certain known environments
   (see [Known Environments](#known-environments) below).

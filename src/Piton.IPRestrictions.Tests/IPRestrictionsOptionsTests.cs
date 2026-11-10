@@ -63,6 +63,23 @@ public class IPRestrictionsOptionsTests
         options.AllowedIPAddresses.Should().Equal(IPAddress.Parse("5.6.7.8"));
         options.AllowedIPNetworks.Should().Equal(IPNetwork.Parse("10.0.0.0/8"));
     }
+    
+    [Theory]
+    [InlineData("Disabled", IPRestrictionMode.Disabled)]
+    [InlineData("Enabled, AddEndpointHeader", IPRestrictionMode.AddEndpointHeader | IPRestrictionMode.Enabled)]
+    [InlineData("AddEndpointHeader, Enabled, Enabled", IPRestrictionMode.AddEndpointHeader | IPRestrictionMode.Enabled)]
+    public void BoundConfigurationShouldParseMode(string modeString, IPRestrictionMode expectedMode)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["IPRestrictions:Mode"] = modeString
+            })
+            .Build();
+        var options = new IPRestrictionsOptions();
+        configuration.Bind("IPRestrictions", options);
+        options.Mode.Should().Be(expectedMode);
+    }
 
     [Fact]
     public void ParseIPAddressesShouldSplitAddressesAndNetworksAndSkipInvalidEntries()
@@ -174,13 +191,15 @@ public class IPRestrictionsOptionsTests
 
     [Theory]
     [InlineData(IPRestrictionMode.Enabled, LogLevel.Warning)]
+    [InlineData(IPRestrictionMode.Enabled | IPRestrictionMode.AddEndpointHeader, LogLevel.Warning)]
     [InlineData(IPRestrictionMode.AddEndpointHeader, LogLevel.Debug)]
     [InlineData(IPRestrictionMode.Disabled, LogLevel.Debug)]
+    [InlineData(IPRestrictionMode.Disabled | IPRestrictionMode.Enabled, LogLevel.Debug)]
     public void ParseIPAddressesWithNoValidEntriesShouldLog(IPRestrictionMode mode, LogLevel expectedLevel)
     {
         var options = new IPRestrictionsOptions
         {
-            Enabled = mode,
+            Mode = mode,
             AllowLoopbackIPs = false,
             AllowedIPs = ["invalid"]
         };
@@ -192,6 +211,19 @@ public class IPRestrictionsOptionsTests
         options.AllowedIPNetworks.Should().BeEmpty();
         logger.Entries.Should().ContainSingle(e => e.Message.StartsWith("No allowed IP addresses or networks found"))
             .Which.Level.Should().Be(expectedLevel);
+    }
+    
+    [Fact]
+    public void ValidateOptionsWithInvalidModeShouldThrow()
+    {
+        var options = new IPRestrictionsOptions
+        {
+            Mode = (IPRestrictionMode)short.MaxValue
+        };
+
+        Action act = () => options.Validate();
+
+        act.Should().Throw<Exception>().WithMessage($"IPRestrictionsOptions.Mode: unexpected value {short.MaxValue}");
     }
 
     private sealed class ListLogger<T> : ILogger<T>

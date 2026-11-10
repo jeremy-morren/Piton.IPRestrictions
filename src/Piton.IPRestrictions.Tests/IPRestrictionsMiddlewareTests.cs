@@ -267,9 +267,9 @@ public class IPRestrictionsMiddlewareTests
     }
 
     [Theory]
-    [InlineData(11, null)]
-    [InlineData(12, "Remote")]
-    public async Task AddRemoteEndpointHeaderShouldModifyResponse(int testPort, string? headerName)
+    [InlineData(11, null, (IPRestrictionMode)0)]
+    [InlineData(12, "Remote", IPRestrictionMode.Enabled)]
+    public async Task AddRemoteEndpointHeaderShouldModifyResponse(int testPort, string? headerName, IPRestrictionMode mode)
     {
         await using var app = new TestWebApp(
             testPort: testPort,
@@ -277,7 +277,7 @@ public class IPRestrictionsMiddlewareTests
             {
                 if (headerName != null)
                     o.RemoteEndpointHeaderName = headerName;
-                o.AddRemoteEndpointHeader = true;
+                o.Mode = IPRestrictionMode.AddEndpointHeader | mode;
                 o.AllowedIPs.Add("0.0.0.0/0");
             },
             useForwardedHeaders: true);
@@ -297,15 +297,66 @@ public class IPRestrictionsMiddlewareTests
             });
     }
 
-    [Fact]
-    public async Task DisableMiddlewareShouldBeRespected()
+    /// <summary>
+    /// <see cref="IPRestrictionMode.Disabled"/> short-circuits the middleware, whatever else is set.
+    /// Otherwise <see cref="IPRestrictionMode.AddEndpointHeader"/> and <see cref="IPRestrictionMode.Enabled"/>
+    /// each have their own effect, independently of the other.
+    /// </summary>
+    [Theory]
+    [InlineData((IPRestrictionMode)0)]
+    [InlineData(IPRestrictionMode.Disabled)]
+    [InlineData(IPRestrictionMode.AddEndpointHeader)]
+    [InlineData(IPRestrictionMode.Disabled | IPRestrictionMode.AddEndpointHeader)]
+    [InlineData(IPRestrictionMode.Enabled)]
+    [InlineData(IPRestrictionMode.Disabled | IPRestrictionMode.Enabled)]
+    [InlineData(IPRestrictionMode.AddEndpointHeader | IPRestrictionMode.Enabled)]
+    [InlineData(IPRestrictionMode.Disabled | IPRestrictionMode.AddEndpointHeader | IPRestrictionMode.Enabled)]
+    public async Task ModeFlagsShouldBeAppliedIndependentlyUnlessDisabled(IPRestrictionMode mode)
     {
+        const string allowedIP = "203.0.113.5";
+        const string deniedIP = "198.51.100.1";
+
         await using var app = new TestWebApp(
-            testPort: 20,
+            // A port per combination of the flags (0-7)
+            testPort: 80 + (int)mode,
             configureOptions: o =>
             {
-                o.AddRemoteEndpointHeader = true;
-                o.Enabled = IPRestrictionMode.Disabled;
+                o.Mode = mode;
+                o.AllowLoopbackIPs = false;
+                o.AllowedIPs.Add("203.0.113.0/24");
+            },
+            useForwardedHeaders: true);
+
+        var disabled = mode.HasFlag(IPRestrictionMode.Disabled);
+        var expectHeader = !disabled && mode.HasFlag(IPRestrictionMode.AddEndpointHeader);
+        var expectRestricted = !disabled && mode.HasFlag(IPRestrictionMode.Enabled);
+
+        var client = app.CreateClient();
+        foreach (var ip in new[] { allowedIP, deniedIP })
+        {
+            using var response = await client.SendAsync(app.CreateRequest("/", ip), TestContext.Current.CancellationToken);
+
+            var expectDenied = expectRestricted && ip == deniedIP;
+            response.StatusCode.Should().Be(expectDenied ? HttpStatusCode.Forbidden : HttpStatusCode.OK,
+                "mode {0}, IP {1}", mode, ip);
+
+            if (expectHeader)
+                response.Headers.GetValues("X-Remote-Endpoint").Should().ContainSingle().Which.Should().Be(ip);
+            else
+                response.Headers.Contains("X-Remote-Endpoint").Should().BeFalse("mode {0}", mode);
+        }
+    }
+
+    [Theory]
+    [InlineData(20, (IPRestrictionMode)0)]
+    [InlineData(21, IPRestrictionMode.AddEndpointHeader)]
+    public async Task DisableMiddlewareShouldBeRespected(int testPort, IPRestrictionMode mode)
+    {
+        await using var app = new TestWebApp(
+            testPort: testPort,
+            configureOptions: o =>
+            {
+                o.Mode = IPRestrictionMode.Disabled | mode;
             },
             useForwardedHeaders: true);
 
@@ -318,31 +369,6 @@ public class IPRestrictionsMiddlewareTests
                 using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
                 response.StatusCode.Should().Be(HttpStatusCode.OK);
                 response.Headers.Contains("X-Remote-Endpoint").Should().BeFalse();
-            });
-    }
-    
-    [Fact]
-    public async Task AddEndpointHeaderOnlyShouldBeRespected()
-    {
-        await using var app = new TestWebApp(
-            testPort: 20,
-            configureOptions: o =>
-            {
-                o.AddRemoteEndpointHeader = true;
-                o.Enabled = IPRestrictionMode.AddEndpointHeader;
-            },
-            useForwardedHeaders: true);
-
-        var client = app.CreateClient();
-        await Assert.AllAsync(
-            ["5.4.3.2", "::ffff:1.3.5.7"],
-            async ip =>
-            {
-                var request = app.CreateRequest("/", ip);
-                using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
-                response.Headers.TryGetValues("X-Remote-Endpoint", out var values).Should().BeTrue();
-                values.Should().ContainSingle().Which.Should().Be(ip);
             });
     }
 
@@ -407,7 +433,7 @@ public class IPRestrictionsMiddlewareTests
         app.UseAuthorization();
     }
 
-    // UseIPRestrictions only checks the middleware order from .NET 7
+    // UseIPRestrictions can only check the middleware order from .NET 7
 #if NET7_0_OR_GREATER
     [Fact]
     public void RegisterMiddlewareBeforeRoutingShouldThrow()
