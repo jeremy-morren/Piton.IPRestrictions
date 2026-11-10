@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 #if NET11_0_OR_GREATER
 using IPNetwork = System.Net.IPNetwork;
@@ -392,16 +393,18 @@ public class IPRestrictionsMiddlewareTests
         var builder = WebApplication.CreateBuilder();
 
         builder.Services.AddIPRestrictions();
+        builder.Services.AddAuthorization();
 
         var app = builder.Build();
 
-        // After routing, before authentication
+        // After routing, before authentication and authorization
         app.UseRouting();
 
         Action registerMiddleware = () => app.UseIPRestrictions();
         registerMiddleware.Should().NotThrow();
 
         app.UseAuthentication();
+        app.UseAuthorization();
     }
 
     // UseIPRestrictions only checks the middleware order from .NET 7
@@ -424,28 +427,26 @@ public class IPRestrictionsMiddlewareTests
         app.UseIPRestrictions(); // Should not throw now
     }
 
+#endif
+
     [Fact]
-    public void RegisterMiddlewareAfterAuthShouldThrow()
+    public void RegisterMiddlewareAfterAuthenticationAndAuthorizationShouldNotThrow()
     {
         var builder = WebApplication.CreateBuilder();
 
         builder.Services.AddIPRestrictions();
+        builder.Services.AddAuthorization();
 
         var app = builder.Build();
 
-        Action registerMiddleware = () => app.UseIPRestrictions();
-        registerMiddleware.Should().Throw<InvalidOperationException>()
-            .WithMessage("The IPRestrictionsMiddleware must be added after the routing middleware");
-
+        // Anywhere after routing
         app.UseRouting();
-
         app.UseAuthentication();
+        app.UseAuthorization();
 
-        registerMiddleware = () => app.UseIPRestrictions();
-        registerMiddleware.Should().Throw<InvalidOperationException>()
-            .WithMessage("The IPRestrictionsMiddleware must be added before the authentication middleware");
+        Action registerMiddleware = () => app.UseIPRestrictions();
+        registerMiddleware.Should().NotThrow();
     }
-#endif
 
     [Theory]
     [InlineData("127.0.0.1", "127.0.0.1")]

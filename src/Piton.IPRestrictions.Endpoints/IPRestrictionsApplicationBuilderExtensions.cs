@@ -7,31 +7,24 @@ public static class IPRestrictionsApplicationBuilderExtensions
 {
     /// <summary>
     /// Restricts access to the application based on the client IP address.
-    /// This middleware should be added after <see cref="Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseRouting">UseRouting()</see>
-    /// and before <see cref="Microsoft.AspNetCore.Builder.AuthAppBuilderExtensions.UseAuthentication">UseAuthentication()</see>.
+    /// This middleware must be added after <see cref="Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseRouting">UseRouting()</see>,
+    /// since it needs the endpoint metadata.
     /// </summary>
     /// <remarks>
-    /// The middleware must be added after routing because it needs to access the endpoint metadata.
-    /// However, it must be added before authentication so that it can block requests before they reach authentication.
+    /// The IP restrictions are applied wherever the middleware is registered in the pipeline: middleware registered
+    /// before it (such as authentication and authorization) runs first, even for requests that it then denies.
     /// </remarks>
     public static IApplicationBuilder UseIPRestrictions(this IApplicationBuilder app)
     {
         ArgumentNullException.ThrowIfNull(app);
 
 #if NET7_0_OR_GREATER
-        // From .NET 7 onwards, the application builder methods add a marker to the application builder properties
-        // to indicate that the routing and authentication middleware have been added.
-        
+        // From .NET 7 onwards, UseRouting() adds a marker to the application builder properties
         const string routingMiddlewareKey = "__EndpointRouteBuilder";
-        const string authenticationMiddlewareKey = "__AuthenticationMiddlewareSet";
-        
+
         if (!app.Properties.ContainsKey(routingMiddlewareKey))
             throw new InvalidOperationException(
                 $"The {nameof(IPRestrictionsMiddleware)} must be added after the routing middleware");
-
-        if (app.Properties.ContainsKey(authenticationMiddlewareKey))
-            throw new InvalidOperationException(
-                $"The {nameof(IPRestrictionsMiddleware)} must be added before the authentication middleware");
 #endif
 
         const string middlewareKey = "__IPRestrictionsMiddlewareSet";

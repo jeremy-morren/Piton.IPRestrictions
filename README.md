@@ -37,20 +37,28 @@ builder.Services.AddIPRestrictions(o =>
     o.AllowLANIPs = false; // Allow LAN addresses, default is false
 });
 
+app.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    // When behind a reverse proxy forwarded headers must be enabled, 
+    // otherwise the remote address will always be the proxy's address.
+    // See section Forwarded Headers below
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    o.ConfigureForReverseProxy(ReverseProxy.YourProxy);
+    o.AddKnownNetworkForCurrentEnvironment();
+});
+
 // ... other services
 
 var app = builder.Build();
 
-// When behind a reverse proxy forwarded headers must be enabled, 
-// otherwise the remote address will always be the proxy's address.
-// Since .NET 8, forwarded headers are only applied for known proxies: see section Forwarded Headers below
-app.UseDefaultForwardedHeaders();
+app.UseForwardedHeaders();
 
 // ... other middleware
 
 app.UseRouting();
 
-// Map the middleware after UseRouting and before UseAuthentication
+// The middleware must be added after UseRouting. Any middleware added before UseIPRestrictions 
+// (e.g. authentication and authorization) runs first, even for requests it then denies.
 app.UseIPRestrictions();
 
 app.UseAuthentication();
@@ -174,12 +182,7 @@ to avoid high memory usage and performance issues.
 builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics => metrics.AddIPRestrictionsInstrumentation(o =>
     {
-        o.AllowedRequests = true;
-        o.ConfigureTags = (ref TagList tags, Endpoint endpoint, IPAddress? remoteIp, bool denied) =>
-        {
-            if (endpoint is RouteEndpoint { RoutePattern.RawText: { } route })
-                tags.Add("http.route", route);
-        };
+        // Configure metrics options here
     }));
 ```
 
