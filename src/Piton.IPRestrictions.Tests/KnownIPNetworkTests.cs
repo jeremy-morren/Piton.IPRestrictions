@@ -11,7 +11,7 @@ using Xunit;
 namespace Piton.IPRestrictions.Tests;
 
 /// <summary>
-/// Tests for <see cref="ForwardedHeadersOptionsIPRestrictionsExtensions.AddKnownIPNetwork(ForwardedHeadersOptions)"/>.
+/// Tests for <see cref="ForwardedHeadersOptionsIPRestrictionsExtensions.AddKnownNetworkForCurrentEnvironment(ForwardedHeadersOptions)"/>.
 /// The environment is passed in rather than set on the process, since tests run in parallel.
 /// </summary>
 public class KnownIPNetworkTests
@@ -23,7 +23,7 @@ public class KnownIPNetworkTests
     ];
 
     [Fact]
-    public void AddKnownIPNetworkShouldAddNothingOutsideAKnownEnvironment()
+    public void AddKnownNetworkForCurrentEnvironmentShouldAddNothingOutsideAKnownEnvironment()
     {
         AddedNetworks(new Dictionary<string, string>()).Should().BeEmpty();
     }
@@ -31,21 +31,21 @@ public class KnownIPNetworkTests
     [Theory]
     [InlineData("CONTAINER_APP_REPLICA_NAME", "100.64.0.0/10")]
     [InlineData("KUBERNETES_SERVICE_HOST", "10.0.0.0/8")]
-    public void AddKnownIPNetworkShouldAddTheEnvironmentNetwork(string variable, string expectedNetwork)
+    public void AddKnownNetworkForCurrentEnvironmentShouldAddTheEnvironmentNetwork(string variable, string expectedNetwork)
     {
         AddedNetworks(new Dictionary<string, string> { [variable] = "value" })
             .Should().Equal(expectedNetwork);
     }
 
     [Fact]
-    public void AddKnownIPNetworkShouldAddAppServiceNetworks()
+    public void AddKnownNetworkForCurrentEnvironmentShouldAddAppServiceNetworks()
     {
         AddedNetworks(new Dictionary<string, string> { ["WEBSITE_SITE_NAME"] = "my-app" })
             .Should().BeEquivalentTo(AppServiceNetworks);
     }
 
     [Fact]
-    public void AddKnownIPNetworkShouldIgnoreEmptyVariables()
+    public void AddKnownNetworkForCurrentEnvironmentShouldIgnoreEmptyVariables()
     {
         AddedNetworks(new Dictionary<string, string>
         {
@@ -56,7 +56,7 @@ public class KnownIPNetworkTests
     }
 
     [Fact]
-    public void AddKnownIPNetworkShouldPreferTheMostSpecificEnvironment()
+    public void AddKnownNetworkForCurrentEnvironmentShouldPreferTheMostSpecificEnvironment()
     {
         // Azure Container Apps runs on Kubernetes, so both may be set
         AddedNetworks(new Dictionary<string, string>
@@ -73,21 +73,21 @@ public class KnownIPNetworkTests
     }
 
     [Fact]
-    public void AddKnownIPNetworkShouldKeepExistingNetworksAndReturnTheOptions()
+    public void AddKnownNetworkForCurrentEnvironmentShouldKeepExistingNetworksAndReturnTheOptions()
     {
         var options = new ForwardedHeadersOptions();
         var before = Networks(options);
 
-        options.AddKnownIPNetwork(Environment(new Dictionary<string, string> { ["KUBERNETES_SERVICE_HOST"] = "10.0.0.1" }))
+        options.AddKnownNetworkForCurrentEnvironment(Environment(new Dictionary<string, string> { ["KUBERNETES_SERVICE_HOST"] = "10.0.0.1" }))
             .Should().BeSameAs(options);
 
         Networks(options).Should().StartWith(before);
     }
 
     [Fact]
-    public void AddKnownIPNetworkShouldRejectNullOptions()
+    public void AddKnownNetworkForCurrentEnvironmentShouldRejectNullOptions()
     {
-        var add = () => ((ForwardedHeadersOptions)null!).AddKnownIPNetwork(_ => null);
+        var add = () => ((ForwardedHeadersOptions)null!).AddKnownNetworkForCurrentEnvironment(_ => null);
         add.Should().Throw<ArgumentNullException>().WithParameterName("options");
     }
 
@@ -103,7 +103,7 @@ public class KnownIPNetworkTests
         const string clientIP = "198.51.100.7";
 
         var options = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor }
-            .AddKnownIPNetwork(Environment(new Dictionary<string, string> { ["WEBSITE_SITE_NAME"] = "my-app" }));
+            .AddKnownNetworkForCurrentEnvironment(Environment(new Dictionary<string, string> { ["WEBSITE_SITE_NAME"] = "my-app" }));
 
         var context = new DefaultHttpContext();
         context.Connection.RemoteIpAddress = IPAddress.Parse(proxyIP);
@@ -119,13 +119,13 @@ public class KnownIPNetworkTests
         name => variables.GetValueOrDefault(name);
 
     /// <summary>
-    /// The networks <c>AddKnownIPNetwork</c> adds to new options, in CIDR notation.
+    /// The networks <c>AddKnownNetworkForCurrentEnvironment</c> adds to new options, in CIDR notation.
     /// </summary>
     private static List<string> AddedNetworks(Dictionary<string, string> variables)
     {
         var options = new ForwardedHeadersOptions();
         var before = Networks(options);
-        options.AddKnownIPNetwork(Environment(variables));
+        options.AddKnownNetworkForCurrentEnvironment(Environment(variables));
         return Networks(options).Skip(before.Count).ToList();
     }
 

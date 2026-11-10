@@ -62,12 +62,13 @@ public static class ForwardedHeadersOptionsIPRestrictionsExtensions
         /// of the Kubernetes API service.
         /// </para>
         /// </remarks>
-        public ForwardedHeadersOptions AddKnownIPNetwork() =>
-            options.AddKnownIPNetwork(Environment.GetEnvironmentVariable);
+        public ForwardedHeadersOptions AddKnownNetworkForCurrentEnvironment() =>
+            options.AddKnownNetworkForCurrentEnvironment(Environment.GetEnvironmentVariable);
 
-        internal ForwardedHeadersOptions AddKnownIPNetwork(Func<string, string?> getEnvironmentVariable)
+        internal ForwardedHeadersOptions AddKnownNetworkForCurrentEnvironment(Func<string, string?> getEnvironmentVariable)
         {
             ArgumentNullException.ThrowIfNull(options);
+            ArgumentNullException.ThrowIfNull(getEnvironmentVariable);
 
             if (IsSet("CONTAINER_APP_REPLICA_NAME"))
             {

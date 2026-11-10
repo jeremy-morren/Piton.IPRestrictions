@@ -16,6 +16,8 @@ public static class IPRestrictionsApplicationBuilderExtensions
     /// </remarks>
     public static IApplicationBuilder UseIPRestrictions(this IApplicationBuilder app)
     {
+        ArgumentNullException.ThrowIfNull(app);
+
 #if NET7_0_OR_GREATER
         // From .NET 7 onwards, the application builder methods add a marker to the application builder properties
         // to indicate that the routing and authentication middleware have been added.

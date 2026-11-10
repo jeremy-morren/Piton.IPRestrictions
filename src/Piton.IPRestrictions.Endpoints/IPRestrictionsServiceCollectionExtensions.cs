@@ -13,6 +13,9 @@ public static class IPRestrictionsServiceCollectionExtensions
         /// </summary>
         public IServiceCollection AddIPRestrictions(string configSection = "IPRestrictions")
         {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(configSection);
+
             services.AddIPRestrictionsCore();
             services.AddOptions<IPRestrictionsOptions>()
                 .BindConfiguration(configSection);
@@ -25,6 +28,9 @@ public static class IPRestrictionsServiceCollectionExtensions
         /// </summary>
         public IServiceCollection AddIPRestrictions(Action<IPRestrictionsOptions> configureOptions)
         {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(configureOptions);
+
             services.AddIPRestrictionsCore();
             services.Configure(configureOptions);
 

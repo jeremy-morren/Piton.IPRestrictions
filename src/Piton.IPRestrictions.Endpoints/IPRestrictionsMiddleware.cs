@@ -118,6 +118,8 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
 
     public static bool IsAllowedIP(IPRestrictionsOptions options, IPAddress? remoteIp, out IPAddress? matchedAddress, out IPNetwork? matchedNetwork)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         matchedAddress = null;
         matchedNetwork = null;
         if (remoteIp == null)

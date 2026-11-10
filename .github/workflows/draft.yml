@@ -110,7 +110,8 @@ jobs:
             --title "$TAG" \
             --generate-notes \
             --target "${{ github.sha }}" \
-            package/*.nupkg
+            package/*.nupkg \
+            package/*.snupkg
           url=$(gh release view "$TAG" --json url --jq .url)
           {
             echo "### Release draft ready"

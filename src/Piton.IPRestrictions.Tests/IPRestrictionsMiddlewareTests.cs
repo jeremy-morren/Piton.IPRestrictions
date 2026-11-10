@@ -2,6 +2,9 @@
 using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 #if NET11_0_OR_GREATER
@@ -133,6 +136,104 @@ public class IPRestrictionsMiddlewareTests
                 headers: new Dictionary<string, string> { { headerName, "true" } }))
             .Should().Be("Restricted");
     }
+
+    [Fact]
+    public async Task EndpointBuilderPredicateShouldBeRespected()
+    {
+        const string headerName = "AllowIP";
+        const string ip = "6.5.4.3";
+
+        await using var app = new TestWebApp(
+            testPort: 70,
+            configureOptions: o =>
+            {
+                o.AllowLoopbackIPs = false;
+                o.AllowedIPs.Add(ip);
+            },
+            useForwardedHeaders: true,
+            configureApp: app =>
+            {
+                app.MapGet("/public", () => "Hello World");
+                app.MapGet("/restricted", () => "Restricted")
+                    .Add(endpoint => endpoint.RestrictIP(context => context.Request.Headers[headerName] != "true"));
+            });
+
+        (await app.InvokeGet("/public")).Should().Be("Hello World");
+        (await app.InvokeGet("/restricted", ip)).Should().Be("Restricted");
+
+        // Without header, IP restriction should apply and block access
+        await app.EnsureFailure("/restricted");
+
+        // With header, should be allowed (i.e. predicate returns false, so the restriction doesn't apply)
+        (await app.InvokeGet("/restricted",
+                headers: new Dictionary<string, string> { { headerName, "true" } }))
+            .Should().Be("Restricted");
+    }
+
+    [Fact]
+    public async Task EndpointBuilderRestrictIPShouldBeRespected()
+    {
+        const string ip = "6.5.4.3";
+
+        await using var app = new TestWebApp(
+            testPort: 71,
+            configureOptions: o =>
+            {
+                o.AllowLoopbackIPs = false;
+                o.AllowedIPs.Add(ip);
+            },
+            useForwardedHeaders: true,
+            configureApp: app =>
+            {
+                app.MapGet("/public", () => "Hello World");
+                app.MapGet("/restricted", () => "Restricted").Add(endpoint => endpoint.RestrictIP());
+            });
+
+        (await app.InvokeGet("/public")).Should().Be("Hello World");
+        (await app.InvokeGet("/restricted", ip)).Should().Be("Restricted");
+
+        // Loopback is not allowed
+        await app.EnsureFailure("/restricted");
+    }
+
+    [Fact]
+    public void EndpointBuilderRestrictIPShouldAddTheAttribute()
+    {
+        var endpointBuilder = CreateEndpointBuilder();
+
+        endpointBuilder.RestrictIP().Should().BeSameAs(endpointBuilder);
+
+        endpointBuilder.Metadata.OfType<RestrictIPAttribute>().Should().ContainSingle()
+            .Which.Predicate.Should().BeNull();
+    }
+
+    [Fact]
+    public void EndpointBuilderRestrictIPShouldAddThePredicate()
+    {
+        var endpointBuilder = CreateEndpointBuilder();
+        Predicate<HttpContext> predicate = _ => true;
+
+        endpointBuilder.RestrictIP(predicate).Should().BeSameAs(endpointBuilder);
+
+        endpointBuilder.Metadata.OfType<RestrictIPAttribute>().Should().ContainSingle()
+            .Which.Predicate.Should().BeSameAs(predicate);
+    }
+
+    [Fact]
+    public void EndpointBuilderRestrictIPShouldRejectNullArguments()
+    {
+        var withoutBuilderOrPredicate = () => ((EndpointBuilder)null!).RestrictIP();
+        withoutBuilderOrPredicate.Should().Throw<ArgumentNullException>().WithParameterName("endpointBuilder");
+
+        var withoutBuilder = () => ((EndpointBuilder)null!).RestrictIP(_ => true);
+        withoutBuilder.Should().Throw<ArgumentNullException>().WithParameterName("endpointBuilder");
+
+        var withoutPredicate = () => CreateEndpointBuilder().RestrictIP(null!);
+        withoutPredicate.Should().Throw<ArgumentNullException>().WithParameterName("predicate");
+    }
+
+    private static RouteEndpointBuilder CreateEndpointBuilder() =>
+        new(_ => Task.CompletedTask, RoutePatternFactory.Parse("/"), order: 0);
 
     [Fact]
     public async Task AllowLanIPsShouldBeRespected()

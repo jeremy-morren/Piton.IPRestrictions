@@ -106,5 +106,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: package
-          path: src/artifacts/package/release/*.nupkg
+          path: |
+            src/artifacts/package/release/*.nupkg
+            src/artifacts/package/release/*.snupkg
           if-no-files-found: error

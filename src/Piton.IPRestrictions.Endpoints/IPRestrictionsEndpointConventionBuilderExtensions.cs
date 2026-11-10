@@ -5,14 +5,30 @@
 /// </summary>
 public static class IPRestrictionsEndpointConventionBuilderExtensions
 {
-    /// <summary>
-    /// Applies IP restrictions to the endpoint.
-    /// </summary>
-    public static void RestrictIP(this EndpointBuilder endpointBuilder) 
+    extension(EndpointBuilder endpointBuilder)
     {
-        endpointBuilder.Metadata.Add(RestrictIPMetadata);
+        /// <summary>
+        /// Applies IP restrictions to the endpoint.
+        /// </summary>
+        public EndpointBuilder RestrictIP() 
+        {
+            ArgumentNullException.ThrowIfNull(endpointBuilder);
+            endpointBuilder.Metadata.Add(RestrictIPMetadata);
+            return endpointBuilder;
+        }
+
+        /// <summary>
+        /// Applies IP restrictions to the endpoint.
+        /// </summary>
+        public EndpointBuilder RestrictIP(Predicate<HttpContext> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(endpointBuilder);
+            ArgumentNullException.ThrowIfNull(predicate);
+            endpointBuilder.Metadata.Add(new RestrictIPAttribute(predicate));
+            return endpointBuilder;
+        }
     }
-    
+
     /// <param name="builder">
     /// The <see cref="IEndpointConventionBuilder"/> endpoint convention builder to add IP restrictions to
     /// </param>
@@ -27,6 +43,7 @@ public static class IPRestrictionsEndpointConventionBuilderExtensions
         /// <returns>The builder instance so that further calls can be chained</returns>
         public TBuilder RestrictIP()
         {
+            ArgumentNullException.ThrowIfNull(builder);
             builder.Add(b => b.RestrictIP());
             return builder;
         }
@@ -38,6 +55,7 @@ public static class IPRestrictionsEndpointConventionBuilderExtensions
         /// <returns>The builder instance so that further calls can be chained</returns>
         public TBuilder RestrictIP(Predicate<HttpContext> predicate)
         {
+            ArgumentNullException.ThrowIfNull(builder);
             ArgumentNullException.ThrowIfNull(predicate);
             builder.Add(endpoint =>
             {

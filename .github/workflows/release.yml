@@ -29,8 +29,9 @@ jobs:
           ref: ${{ github.event.release.tag_name }}
           sparse-checkout: .github/scripts
 
+      # dotnet nuget push also pushes the symbol package (.snupkg) next to each package
       - name: Download the packages from the release
-        run: gh release download "$TAG" --pattern '*.nupkg' --dir package
+        run: gh release download "$TAG" --pattern '*.nupkg' --pattern '*.snupkg' --dir package
 
       # The draft carried the packages built from that commit; a tag that disagrees with them means
       # the release was assembled by hand, and pushing a wrong version to NuGet cannot be undone.

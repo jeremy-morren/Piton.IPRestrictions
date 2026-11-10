@@ -12,10 +12,10 @@ predicate deciding per request whether the restriction applies.
 
 Install the `Piton.IPRestrictions.Endpoints` NuGet package: `dotnet add package Piton.IPRestrictions.Endpoints`
 
-```msbuild
+```xml
 <Project>
   <ItemGroup>
-    <PackageReference Include="Piton.IPRestrictions.Endpoints" Version="1.0.1" />
+    <PackageReference Include="Piton.IPRestrictions.Endpoints" Version="..." />
   </ItemGroup>
 </Project>
 ```
@@ -98,17 +98,14 @@ There are 2 things to be aware of when using this library behind a reverse proxy
 
 To help with this, the library contains 2 helper functions:
 - `ConfigureForReverseProxy` - configures the forwarded headers options for a specific reverse proxy (see [Reverse Proxies](#reverse-proxies) below)
-- `AddKnownIPNetwork` - adds the correct value to `ForwardedHeadersOptions.KnownIPNetworks` for certain known environments
+- `AddKnownNetworkForCurrentEnvironment` - adds the correct value to `ForwardedHeadersOptions.KnownIPNetworks` for certain known environments
   (see [Known Environments](#known-environments) below).
 
 ```csharp
 app.UseForwardedHeaders(new ForwardedHeadersOptions()
-    {
-        // Expose the original protocol and client IP address to the application
-        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-    }
+    { ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor }
     .ConfigureForReverseProxy(ReverseProxy.YourProxy) // Configure for the specific reverse proxy you are using
-    .AddKnownIPNetwork(); // Adds the correct value to ForwardedHeadersOptions.KnownIPNetworks for the current environment
+    .AddKnownNetworkForCurrentEnvironment(); // Adds the correct value to ForwardedHeadersOptions.KnownIPNetworks for the current environment
 ```
 
 ### Logging
@@ -207,7 +204,7 @@ the correct header value for the known proxies below.
 
 Since .NET 8, forwarded headers are only applied when the request comes from a known proxy (see
 [ForwardedHeadersOptions.KnownIPNetworks](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.builder.forwardedheadersoptions.knownipnetworks)).
-This library includes a helper function `AddKnownIPNetwork` that adds the correct value to `ForwardedHeadersOptions.KnownIPNetworks`
+This library includes a helper function `AddKnownNetworkForCurrentEnvironment` that adds the correct value to `ForwardedHeadersOptions.KnownIPNetworks`
 for certain known environments, detected by an environment variable:
 
 | Environment                                                                       | Environment Variable                                                                                                                  | Known IP Networks                               | Notes                                                                                                                                                                                               |

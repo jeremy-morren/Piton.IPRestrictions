@@ -12,6 +12,9 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
         <!-- 
             NET 6: The floor.
             NET 7: Middleware properties added, enabling checking whether UseRouting() and UseAuthentication() are called.

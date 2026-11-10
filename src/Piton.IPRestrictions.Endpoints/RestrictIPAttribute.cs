@@ -27,6 +27,7 @@ public sealed class RestrictIPAttribute : Attribute
     /// <param name="predicate">A predicate that takes the HttpContext and returns true if IP restrictions should be applied</param>
     public RestrictIPAttribute(Predicate<HttpContext> predicate)
     {
-        Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
+        ArgumentNullException.ThrowIfNull(predicate);
+        Predicate = predicate;
     }
 }
