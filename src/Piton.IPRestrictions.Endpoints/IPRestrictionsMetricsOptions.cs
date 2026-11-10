@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
@@ -27,7 +29,28 @@ public class IPRestrictionsMetricsOptions
     public bool DeniedRequests { get; set; } = true;
 
     /// <summary>
-    /// Adds tags to each measurement, from the endpoint and the client's IP address.
+    /// Whether to record an HTTP request, from the endpoint, the client's IP address
+    /// (<see langword="null"/> when it is unknown; an IPv4-mapped IPv6 address is given as the IPv4 address)
+    /// and whether the request was denied.
+    /// Default is <see langword="null" />: every request to an endpoint with IP restrictions is recorded,
+    /// by the counters that are enabled.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For example, to leave out health checks and the application's own load balancer:
+    /// </para>
+    /// <code>
+    /// options.Metrics.Filter = (endpoint, remoteIp, denied) =>
+    ///     endpoint.DisplayName != "Health checks" &amp;&amp; !IPAddress.Parse("10.0.0.4").Equals(remoteIp);
+    /// </code>
+    /// <para>
+    /// Not bound from configuration.
+    /// </para>
+    /// </remarks>
+    public IPRestrictionsMetricFilter? Filter { get; set; }
+
+    /// <summary>
+    /// Adds tags to each measurement, from the endpoint, the client's IP address and whether the request was denied.
     /// Default is <see langword="null" />: measurements have no tags.
     /// </summary>
     /// <remarks>
@@ -36,7 +59,7 @@ public class IPRestrictionsMetricsOptions
     /// (<c>client.address</c>, the OpenTelemetry semantic conventions):
     /// </para>
     /// <code>
-    /// options.Metrics.ConfigureTags = (ref TagList tags, Endpoint endpoint, IPAddress? remoteIp) =>
+    /// options.Metrics.ConfigureTags = (ref TagList tags, Endpoint endpoint, IPAddress? remoteIp, bool denied) =>
     /// {
     ///     if (endpoint is RouteEndpoint { RoutePattern.RawText: { } route })
     ///         tags.Add("http.route", route);

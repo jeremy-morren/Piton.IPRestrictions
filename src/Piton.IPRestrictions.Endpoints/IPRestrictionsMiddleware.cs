@@ -20,16 +20,17 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
 {
     private readonly IOptionsMonitor<IPRestrictionsOptions> _options;
     private readonly IPRestrictionsInstrumentation _instrumentation;
-    private readonly ILogger<IPRestrictionsMiddleware> _logger;
+    private readonly ILogger _logger;
 
     public IPRestrictionsMiddleware(
         IOptionsMonitor<IPRestrictionsOptions> options,
         IPRestrictionsInstrumentation instrumentation,
-        ILogger<IPRestrictionsMiddleware> logger)
+        ILoggerFactory loggerFactory)
     {
         _options = options;
         _instrumentation = instrumentation;
-        _logger = logger;
+        // The middleware is transient (created per request), so this follows configuration reloads
+        _logger = loggerFactory.CreateLogger<IPRestrictionsMiddleware>(options.CurrentValue);
     }
 
     public Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -69,9 +70,6 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
             return next(context);
         }
 
-        // A request to an endpoint with IP restrictions, whether or not the predicate exempts it
-        _instrumentation.Request(options.Metrics, endpoint, remoteIp);
-
         if (predicate != null)
         {
             // Predicate is defined. If it returns false, ignore IP restriction
@@ -81,6 +79,7 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
             {
                 // Predicate returned false, ignore IP restriction
                 LogIgnoringIPRestrictionsDueToPredicate(displayName, path);
+                _instrumentation.Request(options.Metrics, endpoint, remoteIp, denied: false);
                 return next(context);
             }
 
@@ -93,6 +92,7 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
         if (!IsAllowedIP(options, remoteIp, out var matchedAddress, out var matchedNetwork))
         {
             LogForbiddenRequestFromIP(remoteIp);
+            _instrumentation.Request(options.Metrics, endpoint, remoteIp, denied: true);
             _instrumentation.Denied(options.Metrics, endpoint, remoteIp);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.Headers.ContentType = "text/plain";
@@ -111,6 +111,7 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
             LogRequestFromRemoteIPMatchedAllowedNetwork(remoteIp, Format(matchedNetwork.Value), displayName, path);
         }
 
+        _instrumentation.Request(options.Metrics, endpoint, remoteIp, denied: false);
         _instrumentation.Allowed(options.Metrics, endpoint, remoteIp);
         return next(context);
     }

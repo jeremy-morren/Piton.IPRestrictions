@@ -41,7 +41,7 @@ public enum ReverseProxy
     /// </summary>
     /// <remarks>
     /// By default YARP removes any incoming <c>X-Forwarded-For</c> header and replaces it with the client IP address,
-    /// so it cannot be spoofed by the client.
+    /// so <c>X-Forwarded-For</c> cannot be spoofed by the client.
     /// </remarks>
     YARP = 4,
 
@@ -50,9 +50,8 @@ public enum ReverseProxy
     /// (see <see href="https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#defaults">Caddy reverse_proxy defaults</see>)
     /// </summary>
     /// <remarks>
-    /// By default Caddy ignores incoming <c>X-Forwarded-*</c> values unless the request comes from one of its <c>trusted_proxies</c>,
-    /// so <c>X-Forwarded-For</c> cannot be spoofed by the client.
-    /// Caddy does not set <c>X-Real-IP</c>: it passes other headers through unmodified, so a client-supplied <c>X-Real-IP</c> would reach the app.
+    /// By default Caddy ignores incoming <c>X-Forwarded-*</c> values unless the request comes from one of its
+    /// <c>trusted_proxies</c>, so <c>X-Forwarded-For</c> cannot be spoofed by the client.
     /// </remarks>
     Caddy = 5,
 

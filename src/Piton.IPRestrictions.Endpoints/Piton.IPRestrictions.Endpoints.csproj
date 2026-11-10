@@ -23,4 +23,12 @@
         <!-- Replaces the reflection-based BindConfiguration with generated code -->
         <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     </PropertyGroup>
+
+    <!--
+        Before .NET 8: IMeterFactory (DiagnosticSource) and AddMetrics (Extensions.Diagnostics)
+    -->
+    <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics" Version="8.0.0" />
+    </ItemGroup>
 </Project>

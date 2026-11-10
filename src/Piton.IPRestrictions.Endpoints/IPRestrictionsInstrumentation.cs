@@ -15,23 +15,11 @@ internal sealed class IPRestrictionsInstrumentation
     private readonly Counter<long> _allowedRequests;
     private readonly Counter<long> _deniedRequests;
 
-#if NET8_0_OR_GREATER
-    // .NET 8+: take IMeterFactory from DI, so that the meter is scoped to the service provider and disposed with it.
+    // Take IMeterFactory from DI, so that the meter is scoped to the service provider and disposed with it.
     public IPRestrictionsInstrumentation(IMeterFactory meterFactory)
-        : this(meterFactory.Create(IPRestrictionsMetrics.MeterName, Version))
     {
-    }
-#else
-    private static readonly Meter SharedMeter = new(IPRestrictionsMetrics.MeterName, Version);
+        var meter = meterFactory.Create(IPRestrictionsMetrics.MeterName, Version);
 
-    public IPRestrictionsInstrumentation()
-        : this(SharedMeter)
-    {
-    }
-#endif
-
-    private IPRestrictionsInstrumentation(Meter meter)
-    {
         _requests = meter.CreateCounter<long>(
             IPRestrictionsMetrics.RequestsInstrumentName,
             unit: "{request}",
@@ -49,41 +37,45 @@ internal sealed class IPRestrictionsInstrumentation
     /// <summary>
     /// Records a request to an endpoint with IP restrictions.
     /// </summary>
-    public void Request(IPRestrictionsMetricsOptions options, Endpoint endpoint, IPAddress? remoteIp) =>
-        Record(_requests, options.TotalRequests, options, endpoint, remoteIp);
+    public void Request(IPRestrictionsMetricsOptions options, Endpoint endpoint, IPAddress? remoteIp, bool denied) =>
+        Record(_requests, options.TotalRequests, options, endpoint, remoteIp, denied);
 
     /// <summary>
     /// Records an allowed request to an endpoint with IP restrictions.
     /// </summary>
     public void Allowed(IPRestrictionsMetricsOptions options, Endpoint endpoint, IPAddress? remoteIp) =>
-        Record(_allowedRequests, options.AllowedRequests, options, endpoint, remoteIp);
+        Record(_allowedRequests, options.AllowedRequests, options, endpoint, remoteIp, denied: false);
 
     /// <summary>
     /// Records a denied request to an endpoint with IP restrictions.
     /// </summary>
     public void Denied(IPRestrictionsMetricsOptions options, Endpoint endpoint, IPAddress? remoteIp) =>
-        Record(_deniedRequests, options.DeniedRequests, options, endpoint, remoteIp);
+        Record(_deniedRequests, options.DeniedRequests, options, endpoint, remoteIp, denied: true);
 
-    private static void Record(Counter<long> counter, bool enabled, IPRestrictionsMetricsOptions options, Endpoint endpoint, IPAddress? remoteIp)
+    private static void Record(Counter<long> counter, bool enabled, IPRestrictionsMetricsOptions options, Endpoint endpoint, IPAddress? remoteIp, bool denied)
     {
         // Enabled: the counter has a listener (e.g. OpenTelemetry)
         if (!enabled || !counter.Enabled)
             return;
 
-        var configureTags = options.ConfigureTags;
+        var (filter, configureTags) = (options.Filter, options.ConfigureTags);
+
+        // An IPv4 client on a dual mode socket arrives as ::ffff:a.b.c.d: give the callbacks the IPv4 address,
+        // so that one client is one address whichever way it connected
+        if ((filter != null || configureTags != null) && remoteIp is { IsIPv4MappedToIPv6: true })
+            remoteIp = remoteIp.MapToIPv4();
+
+        if (filter != null && !filter(endpoint, remoteIp, denied))
+            return;
+
         if (configureTags == null)
         {
             counter.Add(1);
             return;
         }
 
-        // An IPv4 client on a dual mode socket arrives as ::ffff:a.b.c.d:
-        // pass the IPv4 address, so that one client is one address whichever way it connected
-        if (remoteIp is { IsIPv4MappedToIPv6: true })
-            remoteIp = remoteIp.MapToIPv4();
-
         var tags = new TagList();
-        configureTags(ref tags, endpoint, remoteIp);
+        configureTags(ref tags, endpoint, remoteIp, denied);
         counter.Add(1, tags);
     }
 }

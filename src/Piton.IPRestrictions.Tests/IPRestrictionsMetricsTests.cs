@@ -32,9 +32,9 @@ public class IPRestrictionsMetricsTests
 
     /// <summary>
     /// Tags measurements with the route. Each test's restricted endpoint has a route unique to it, so its measurements
-    /// can be told apart from those of other tests running in parallel (which share the meter before .NET 8).
+    /// can be told apart from those of other tests running in parallel (a listener sees every service provider's meter).
     /// </summary>
-    internal static void TagRoute(ref TagList tags, Endpoint endpoint, IPAddress? remoteIp)
+    internal static void TagRoute(ref TagList tags, Endpoint endpoint, IPAddress? remoteIp, bool denied)
     {
         if (endpoint is RouteEndpoint { RoutePattern.RawText: { } route })
             tags.Add("http.route", route);
@@ -106,6 +106,43 @@ public class IPRestrictionsMetricsTests
         options.AllowedRequests.Should().BeFalse();
         options.DeniedRequests.Should().BeTrue();
         options.ConfigureTags.Should().BeNull();
+        options.Filter.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task FilterShouldExcludeMeasurements()
+    {
+        const string route = "/metrics/filter";
+        var counts = new ConcurrentDictionary<string, long>();
+        var filteredIps = new ConcurrentBag<IPAddress?>();
+
+        using var listener = Listen(route, (instrument, value, _) =>
+            counts.AddOrUpdate(instrument.Name, value, (_, existing) => existing + value));
+
+        var excluded = IPAddress.Parse(AllowedIP);
+        await using var app = CreateApp(testPort: 65, route, metrics =>
+        {
+            metrics.TotalRequests = true;
+            metrics.AllowedRequests = true;
+            metrics.ConfigureTags = TagRoute;
+            metrics.Filter = (endpoint, remoteIp, _) =>
+            {
+                filteredIps.Add(remoteIp);
+                return endpoint is RouteEndpoint && !excluded.Equals(remoteIp);
+            };
+        });
+        // 2 allowed requests from the excluded address, then 1 denied and 1 exempted from another
+        await MakeRequests(app, route);
+        // The excluded address as an IPv4 client on a dual mode socket: the filter is given the IPv4 address
+        await app.InvokeGet(route, "::ffff:" + AllowedIP);
+
+        filteredIps.Should().NotBeEmpty().And.OnlyContain(ip => ip != null && ip.AddressFamily == AddressFamily.InterNetwork);
+        counts.Should().BeEquivalentTo(new Dictionary<string, long>
+        {
+            // The denied and the exempted request; none from the excluded address
+            [IPRestrictionsMetrics.RequestsInstrumentName] = 2,
+            [IPRestrictionsMetrics.DeniedRequestsInstrumentName] = 1,
+        });
     }
 
     [Theory]
@@ -159,34 +196,42 @@ public class IPRestrictionsMetricsTests
     public async Task ConfigureTagsShouldTagMeasurements()
     {
         const string route = "/metrics/configure-tags";
-        var measurements = new ConcurrentBag<(string Instrument, object? ClientAddress)>();
+        var measurements = new ConcurrentBag<(string Instrument, object? ClientAddress, object? Denied)>();
         var remoteIps = new ConcurrentBag<IPAddress?>();
 
         using var listener = Listen(route, (instrument, _, tags) =>
-            measurements.Add((instrument.Name, tags.GetValueOrDefault("client.address"))));
+            measurements.Add((instrument.Name, tags.GetValueOrDefault("client.address"), tags.GetValueOrDefault("denied"))));
 
         await using var app = CreateApp(testPort: 61, route, metrics =>
         {
+            metrics.TotalRequests = true;
             metrics.AllowedRequests = true;
-            metrics.ConfigureTags = (ref TagList tags, Endpoint endpoint, IPAddress? remoteIp) =>
+            metrics.ConfigureTags = (ref TagList tags, Endpoint endpoint, IPAddress? remoteIp, bool denied) =>
             {
                 remoteIps.Add(remoteIp);
-                TagRoute(ref tags, endpoint, remoteIp);
+                TagRoute(ref tags, endpoint, remoteIp, denied);
                 if (remoteIp != null)
                     tags.Add("client.address", remoteIp.ToString());
+                tags.Add("denied", denied);
             };
         });
         await app.InvokeGet(route, AllowedIP);
         // An IPv4 client on a dual mode socket: given to the callback as the IPv4 address
         await app.InvokeGet(route, "::ffff:203.0.113.6");
         await app.EnsureFailure(route, DeniedIP);
+        // Exempted by the predicate: not denied
+        await app.InvokeGet(route, DeniedIP, new Dictionary<string, string> { [SkipHeader] = "1" });
 
         remoteIps.Should().OnlyContain(ip => ip != null && ip.AddressFamily == AddressFamily.InterNetwork);
-        measurements.Should().BeEquivalentTo(new (string, object?)[]
+        measurements.Should().BeEquivalentTo(new (string, object?, object?)[]
         {
-            (IPRestrictionsMetrics.AllowedRequestsInstrumentName, AllowedIP),
-            (IPRestrictionsMetrics.AllowedRequestsInstrumentName, "203.0.113.6"),
-            (IPRestrictionsMetrics.DeniedRequestsInstrumentName, DeniedIP)
+            (IPRestrictionsMetrics.RequestsInstrumentName, AllowedIP, false),
+            (IPRestrictionsMetrics.AllowedRequestsInstrumentName, AllowedIP, false),
+            (IPRestrictionsMetrics.RequestsInstrumentName, "203.0.113.6", false),
+            (IPRestrictionsMetrics.AllowedRequestsInstrumentName, "203.0.113.6", false),
+            (IPRestrictionsMetrics.RequestsInstrumentName, DeniedIP, true),
+            (IPRestrictionsMetrics.DeniedRequestsInstrumentName, DeniedIP, true),
+            (IPRestrictionsMetrics.RequestsInstrumentName, DeniedIP, false)
         });
     }
 

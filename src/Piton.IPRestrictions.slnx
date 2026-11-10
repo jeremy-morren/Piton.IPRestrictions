@@ -17,6 +17,7 @@
     <File Path="Directory.Build.props" />
     <File Path="../global.json" />
     <File Path="../README.md" />
+    <File Path="version.props" />
   </Folder>
   <Project Path="Piton.IPRestrictions.Endpoints/Piton.IPRestrictions.Endpoints.csproj" />
   <Project Path="Piton.IPRestrictions.Endpoints.Telemetry/Piton.IPRestrictions.Endpoints.Telemetry.csproj" />

@@ -51,6 +51,18 @@ public partial class IPRestrictionsOptions
     /// </summary>
     public IPRestrictionsMetricsOptions Metrics { get; set; } = new();
 
+    /// <summary>
+    /// Whether the middleware logs under the <c>Microsoft.AspNetCore.IPRestrictions</c> category, like ASP.NET Core's
+    /// own middleware, so that the usual <c>"Microsoft.AspNetCore": "Warning"</c> logging configuration applies.
+    /// When <see langword="false"/>, it logs under <c>Piton.IPRestrictions.Endpoints.IPRestrictionsMiddleware</c>.
+    /// Default is <see langword="true" />.
+    /// </summary>
+    /// <remarks>
+    /// Problems with these options (such as an invalid entry in <see cref="AllowedIPs"/>) are always logged under
+    /// <c>Piton.IPRestrictions.Endpoints.IPRestrictionsOptions</c>.
+    /// </remarks>
+    public bool UseMicrosoftLoggingNamespace { get; set; } = true;
+
     internal bool Validate()
     {
         if (Enabled != IPRestrictionMode.Disabled && 
@@ -142,17 +154,17 @@ public partial class IPRestrictionsOptions
     }
 
     [LoggerMessage(1, LogLevel.Debug, "Adding LAN IP ranges to allowed IPs")]
-    static partial void LogAddingLanIPRangesToAllowedIps(ILogger<IPRestrictionsOptions> logger);
+    static partial void LogAddingLanIPRangesToAllowedIps(ILogger logger);
 
     [LoggerMessage(2, LogLevel.Debug, "Adding loopback IP ranges to allowed IPs")]
-    static partial void LogAddingLoopbackIPRangesToAllowedIps(ILogger<IPRestrictionsOptions> logger);
+    static partial void LogAddingLoopbackIPRangesToAllowedIps(ILogger logger);
     
     [LoggerMessage(3, LogLevel.Warning, "Invalid IP address/network in {OptionsType}.{AllowedIPs}: {IPAddress}, skipping")]
-    static partial void LogInvalidIPAddressNetworkInOptionsType(ILogger<IPRestrictionsOptions> logger, string? optionsType, string allowedIPs, string ipAddress);
+    static partial void LogInvalidIPAddressNetworkInOptionsType(ILogger logger, string? optionsType, string allowedIPs, string ipAddress);
 
     [LoggerMessage(4, LogLevel.Warning, "No allowed IP addresses or networks found in {OptionsType}, all requests will be denied")]
-    static partial void LogNoAllowedIPAddressesOrNetworksFoundAllRequestsWillBeDenied(ILogger<IPRestrictionsOptions> logger, string? optionsType);
+    static partial void LogNoAllowedIPAddressesOrNetworksFoundAllRequestsWillBeDenied(ILogger logger, string? optionsType);
 
     [LoggerMessage(5, LogLevel.Debug, "No allowed IP addresses or networks found in {OptionsType}, but middleware is disabled so all requests will be allowed")]
-    static partial void LogNoAllowedIPAddressesOrNetworksFoundMiddlewareIsDisabled(ILogger<IPRestrictionsOptions> logger, string? optionsType);
+    static partial void LogNoAllowedIPAddressesOrNetworksFoundMiddlewareIsDisabled(ILogger logger, string? optionsType);
 }

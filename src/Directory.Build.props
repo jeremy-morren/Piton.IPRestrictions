@@ -8,17 +8,19 @@
 
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        
-        <CheckEolTargetFramework>false</CheckEolTargetFramework>
+
         <!-- 
             NET 6: The floor.
             NET 7: Middleware properties added, enabling checking whether UseRouting() and UseAuthentication() are called.
-            NET 8: AOT and configuration binding source generator.
+            NET 8: AOT and configuration binding source generator, forwarded headers proxy detection
             NET 9: Static web assets
-            NET 10: The ceiling for now, to be updated to .NET 11
+            NET 10: ForwardedHeaderOptions.KnownIPNetworks replaced KnownNetworks
         -->
         <IPRestrictionsTargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0</IPRestrictionsTargetFrameworks>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
     <!-- Strong naming: every assembly in the repo is signed with the same key -->
@@ -57,6 +59,10 @@
         <None Include="$(MSBuildThisFileDirectory)../assets/icon.png"
               Pack="true" PackagePath=""
               Visible="false" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.0" PrivateAssets="All"/>
     </ItemGroup>
 
     <Import Project="$(MSBuildThisFileDirectory)version.props" />
