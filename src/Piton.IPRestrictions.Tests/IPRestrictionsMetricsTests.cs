@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Sockets;
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -15,7 +15,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Xunit;
 
-namespace AspNetCore.IPRestrictions.Tests;
+namespace Piton.IPRestrictions.Tests;
 
 public class IPRestrictionsMetricsTests
 {

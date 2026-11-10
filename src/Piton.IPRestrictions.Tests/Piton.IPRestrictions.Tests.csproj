@@ -12,8 +12,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AspNetCore.IPRestrictions.Endpoints\AspNetCore.IPRestrictions.Endpoints.csproj" />
-        <ProjectReference Include="..\AspNetCore.IPRestrictions.Endpoints.Telemetry\AspNetCore.IPRestrictions.Endpoints.Telemetry.csproj" />
+        <ProjectReference Include="..\Piton.IPRestrictions.Endpoints\Piton.IPRestrictions.Endpoints.csproj" />
+        <ProjectReference Include="..\Piton.IPRestrictions.Endpoints.Telemetry\Piton.IPRestrictions.Endpoints.Telemetry.csproj" />
     </ItemGroup>
 
     <!-- The patched OpenTelemetry (GHSA-g94r-2vxg-569j) where available: as in the Telemetry project -->

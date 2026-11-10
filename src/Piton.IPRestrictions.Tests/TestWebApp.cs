@@ -1,5 +1,5 @@
 ﻿using System.Net;
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace AspNetCore.IPRestrictions.Tests;
+namespace Piton.IPRestrictions.Tests;
 
 /// <summary>
 /// A test web application that can be used to test IP restrictions.

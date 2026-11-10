@@ -24,7 +24,7 @@ jobs:
     env:
       results: src/artifacts/test-results
       coverage: src/artifacts/coverage
-      solution: src/AspNetCore.IPRestrictions.slnx
+      solution: src/Piton.IPRestrictions.slnx
     steps:
       - uses: actions/checkout@v7
 
@@ -54,6 +54,15 @@ jobs:
           --logger trx
           --results-directory "${{ env.results }}"
 
+      # Writes the test summary to the job summary (before the coverage summary), a check run,
+      # and a pull request comment it edits on each run.
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ !cancelled() }}
+        with:
+          check_name: Test results
+          files: ${{ env.results }}/**/*.trx
+
       # Merges the per-framework reports. The collector covers every module with symbols, so the report
       # keeps the library only, and drops source-generated files (e.g. the logging generator's).
       - name: Coverage report
@@ -63,21 +72,13 @@ jobs:
           reports: ${{ env.results }}/**/*.cobertura.xml
           targetdir: ${{ env.coverage }}
           reporttypes: MarkdownSummaryGithub;Cobertura
-          assemblyfilters: +AspNetCore.IPRestrictions.Endpoints*
+          assemblyfilters: +Piton.IPRestrictions.Endpoints*
           filefilters: -*.g.cs
           title: Code coverage
 
       - name: Coverage summary
         if: ${{ !cancelled() }}
         run: cat "${{ env.coverage }}/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
-
-      # Writes the test summary to the job summary, a check run, and a pull request comment it edits on each run.
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: ${{ !cancelled() }}
-        with:
-          check_name: Test results
-          files: ${{ env.results }}/**/*.trx
 
       - name: Comment coverage on the pull request
         uses: marocchino/sticky-pull-request-comment@v3

@@ -1,5 +1,5 @@
 ﻿
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Indicates that client IP restrictions should be applied to the action or controller

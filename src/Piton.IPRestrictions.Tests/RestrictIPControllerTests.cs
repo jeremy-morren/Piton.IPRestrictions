@@ -1,11 +1,11 @@
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace AspNetCore.IPRestrictions.Tests;
+namespace Piton.IPRestrictions.Tests;
 
 /// <summary>
 /// IP restrictions applied to MVC controllers, either with <see cref="RestrictIPAttribute"/>

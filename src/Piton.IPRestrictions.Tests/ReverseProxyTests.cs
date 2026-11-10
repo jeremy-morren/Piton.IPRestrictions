@@ -1,5 +1,5 @@
 using System.Net;
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 
-namespace AspNetCore.IPRestrictions.Tests;
+namespace Piton.IPRestrictions.Tests;
 
 public class ReverseProxyTests
 {

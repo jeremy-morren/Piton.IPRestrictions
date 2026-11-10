@@ -1,8 +1,8 @@
 # ASP.Net Core IP restrictions
 
-[![CI](https://img.shields.io/github/actions/workflow/status/jeremy-morren/AspNetCore.IPRestrictions/draft.yml?branch=main&label=CI)](https://github.com/jeremy-morren/AspNetCore.IPRestrictions/actions/workflows/draft.yml?query=branch%3Amain)
-[![AspNetCore.IPRestrictions.Endpoints](https://img.shields.io/nuget/v/AspNetCore.IPRestrictions.Endpoints?label=AspNetCore.IPRestrictions.Endpoints)](https://www.nuget.org/packages/AspNetCore.IPRestrictions.Endpoints)
-[![AspNetCore.IPRestrictions.Endpoints.Telemetry](https://img.shields.io/nuget/v/AspNetCore.IPRestrictions.Endpoints.Telemetry?label=AspNetCore.IPRestrictions.Endpoints.Telemetry)](https://www.nuget.org/packages/AspNetCore.IPRestrictions.Endpoints.Telemetry)
+[![CI](https://img.shields.io/github/actions/workflow/status/jeremy-morren/Piton.IPRestrictions/draft.yml?branch=main&label=CI)](https://github.com/jeremy-morren/Piton.IPRestrictions/actions/workflows/draft.yml?query=branch%3Amain)
+[![Piton.IPRestrictions.Endpoints](https://img.shields.io/nuget/v/Piton.IPRestrictions.Endpoints?label=Piton.IPRestrictions.Endpoints)](https://www.nuget.org/packages/Piton.IPRestrictions.Endpoints)
+[![Piton.IPRestrictions.Endpoints.Telemetry](https://img.shields.io/nuget/v/Piton.IPRestrictions.Endpoints.Telemetry?label=Piton.IPRestrictions.Endpoints.Telemetry)](https://www.nuget.org/packages/Piton.IPRestrictions.Endpoints.Telemetry)
 
 Restricts endpoints to a list of addresses and networks. Opt in per endpoint, 
 either with `[RestrictIP]` or `.RestrictIP()` on an endpoint convention builder, optionally with a
@@ -10,12 +10,12 @@ predicate deciding per request whether the restriction applies.
 
 ### Installation
 
-Install the `AspNetCore.IPRestrictions.Endpoints` NuGet package: `dotnet add package AspNetCore.IPRestrictions.Endpoints`
+Install the `Piton.IPRestrictions.Endpoints` NuGet package: `dotnet add package Piton.IPRestrictions.Endpoints`
 
 ```msbuild
 <Project>
   <ItemGroup>
-    <PackageReference Include="AspNetCore.IPRestrictions.Endpoints" Version="1.0.1" />
+    <PackageReference Include="Piton.IPRestrictions.Endpoints" Version="1.0.1" />
   </ItemGroup>
 </Project>
 ```
@@ -112,15 +112,15 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions()
 
 ### Metrics
 
-The middleware records metrics with `System.Diagnostics.Metrics`, on the `AspNetCore.IPRestrictions` meter
+The middleware records metrics with `System.Diagnostics.Metrics`, on the `Piton.IPRestrictions` meter
 (`IPRestrictionsMetrics.MeterName`). Each is a counter of requests to endpoints with IP restrictions, in `{request}`,
 enabled by an option in `IPRestrictionsOptions.Metrics`:
 
 | Instrument | Counts | Option | Default |
 | :--- | :--- | :--- | :--- |
-| `aspnetcore.ip_restrictions.requests` | All requests, including ones the endpoint's predicate exempted | `TotalRequests` | Off |
-| `aspnetcore.ip_restrictions.allowed_requests` | Allowed requests | `AllowedRequests` | Off |
-| `aspnetcore.ip_restrictions.denied_requests` | Denied requests | `DeniedRequests` | On |
+| `piton.ip_restrictions.requests` | All requests, including ones the endpoint's predicate exempted | `TotalRequests` | Off |
+| `piton.ip_restrictions.allowed_requests` | Allowed requests | `AllowedRequests` | Off |
+| `piton.ip_restrictions.denied_requests` | Denied requests | `DeniedRequests` | On |
 
 ```json
 {
@@ -156,7 +156,7 @@ unbounded: the metrics grow with the number of clients (for denied requests, wit
 scanning the application).
 
 To export them with [OpenTelemetry](https://opentelemetry.io/docs/languages/dotnet/), install the
-`AspNetCore.IPRestrictions.Endpoints.Telemetry` package:
+`Piton.IPRestrictions.Endpoints.Telemetry` package:
 
 ```csharp
 builder.Services.AddOpenTelemetry()

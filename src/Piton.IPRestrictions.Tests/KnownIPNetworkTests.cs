@@ -1,5 +1,5 @@
 using System.Net;
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace AspNetCore.IPRestrictions.Tests;
+namespace Piton.IPRestrictions.Tests;
 
 /// <summary>
 /// Tests for <see cref="ForwardedHeadersOptionsIPRestrictionsExtensions.AddKnownIPNetwork(ForwardedHeadersOptions)"/>.

@@ -1,5 +1,5 @@
 ﻿using System.Net;
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -7,10 +7,10 @@ using Xunit;
 #if NET11_0_OR_GREATER
 using IPNetwork = System.Net.IPNetwork;
 #else
-using IPNetwork = AspNetCore.IPRestrictions.Endpoints.IPNetwork;
+using IPNetwork = Piton.IPRestrictions.Endpoints.IPNetwork;
 #endif
 
-namespace AspNetCore.IPRestrictions.Tests;
+namespace Piton.IPRestrictions.Tests;
 
 public class IPRestrictionsMiddlewareTests
 {

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using IPNetwork = System.Net.IPNetwork;
 #endif
 
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Options for endpoint IP Restrictions middleware.

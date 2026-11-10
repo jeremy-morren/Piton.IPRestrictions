@@ -1,4 +1,4 @@
-﻿namespace AspNetCore.IPRestrictions.Endpoints;
+﻿namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Defines the mode of operation for the IP Restrictions middleware.

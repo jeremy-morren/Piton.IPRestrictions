@@ -9,11 +9,11 @@
         
         <IsPackable>true</IsPackable>
         
-        <PackageId>AspNetCore.IPRestrictions.Endpoints</PackageId>
+        <PackageId>Piton.IPRestrictions.Endpoints</PackageId>
     </PropertyGroup>
     
     <ItemGroup>
-        <InternalsVisibleTo Include="AspNetCore.IPRestrictions.Tests"/>
+        <InternalsVisibleTo Include="Piton.IPRestrictions.Tests"/>
     </ItemGroup>
 
     <!-- .NET8+: enable native AOT and configuration binding source generator -->

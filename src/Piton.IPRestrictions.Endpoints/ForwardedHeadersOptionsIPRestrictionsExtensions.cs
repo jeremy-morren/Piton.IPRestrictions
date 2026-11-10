@@ -1,6 +1,6 @@
 ﻿#pragma warning disable CS1574
 
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Options extensions for <see cref="ForwardedHeadersOptions"/>

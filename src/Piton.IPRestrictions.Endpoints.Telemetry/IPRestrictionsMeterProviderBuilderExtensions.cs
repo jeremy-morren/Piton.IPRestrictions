@@ -1,4 +1,4 @@
-using AspNetCore.IPRestrictions.Endpoints;
+using Piton.IPRestrictions.Endpoints;
 using Microsoft.Extensions.DependencyInjection;
 
 // The OpenTelemetry convention: instrumentation extensions live in the namespace of the builder they extend

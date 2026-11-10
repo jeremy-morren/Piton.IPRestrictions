@@ -62,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           for package in $PACKAGES; do
-            dotnet nuget push "package/AspNetCore.IPRestrictions.${package}.${VERSION}.nupkg" \
+            dotnet nuget push "package/Piton.IPRestrictions.${package}.${VERSION}.nupkg" \
               --source https://api.nuget.org/v3/index.json \
               --api-key "$NUGET_API_KEY" \
               --skip-duplicate

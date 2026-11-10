@@ -1,4 +1,4 @@
-﻿namespace AspNetCore.IPRestrictions.Endpoints;
+﻿namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Extension methods for <see cref="IEndpointConventionBuilder"/> to add IP restrictions to endpoints.

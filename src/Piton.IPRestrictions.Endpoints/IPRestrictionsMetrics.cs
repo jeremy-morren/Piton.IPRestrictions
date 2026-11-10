@@ -1,4 +1,4 @@
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Metrics emitted by the IP restrictions middleware, using <see cref="System.Diagnostics.Metrics"/>.
@@ -20,7 +20,7 @@ namespace AspNetCore.IPRestrictions.Endpoints;
 /// Measurements have no tags, unless <see cref="IPRestrictionsMetricsOptions.ConfigureTags"/> adds them.
 /// </para>
 /// <para>
-/// With OpenTelemetry, add the meter with the <c>AspNetCore.IPRestrictions.Endpoints.Telemetry</c> package,
+/// With OpenTelemetry, add the meter with the <c>Piton.IPRestrictions.Endpoints.Telemetry</c> package,
 /// or with <c>AddMeter(IPRestrictionsMetrics.MeterName)</c>.
 /// </para>
 /// </remarks>
@@ -29,20 +29,20 @@ public static class IPRestrictionsMetrics
     /// <summary>
     /// The name of the meter.
     /// </summary>
-    public const string MeterName = "AspNetCore.IPRestrictions";
+    public const string MeterName = "Piton.IPRestrictions";
 
     /// <summary>
     /// The name of the counter of all requests to endpoints with IP restrictions.
     /// </summary>
-    public const string RequestsInstrumentName = "aspnetcore.ip_restrictions.requests";
+    public const string RequestsInstrumentName = "piton.ip_restrictions.requests";
 
     /// <summary>
     /// The name of the counter of allowed requests to endpoints with IP restrictions.
     /// </summary>
-    public const string AllowedRequestsInstrumentName = "aspnetcore.ip_restrictions.allowed_requests";
+    public const string AllowedRequestsInstrumentName = "piton.ip_restrictions.allowed_requests";
 
     /// <summary>
     /// The name of the counter of denied requests to endpoints with IP restrictions.
     /// </summary>
-    public const string DeniedRequestsInstrumentName = "aspnetcore.ip_restrictions.denied_requests";
+    public const string DeniedRequestsInstrumentName = "piton.ip_restrictions.denied_requests";
 }

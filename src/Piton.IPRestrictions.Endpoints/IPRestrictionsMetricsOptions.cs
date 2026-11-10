@@ -1,4 +1,4 @@
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Which metrics the IP restrictions middleware records. See <see cref="IPRestrictionsMetrics"/> for the instruments.

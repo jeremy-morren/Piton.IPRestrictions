@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Adds tags to an IP restrictions metric measurement. See <see cref="IPRestrictionsMetricsOptions.ConfigureTags"/>.

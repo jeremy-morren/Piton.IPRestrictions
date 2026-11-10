@@ -2,7 +2,7 @@
 using System.Diagnostics.Metrics;
 using System.Net;
 
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Records the <see cref="IPRestrictionsMetrics"/> instruments.

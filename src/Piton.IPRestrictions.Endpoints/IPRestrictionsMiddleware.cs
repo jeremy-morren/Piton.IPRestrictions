@@ -11,7 +11,7 @@ using IPNetwork = System.Net.IPNetwork;
 using Microsoft.AspNetCore.StaticAssets;
 #endif
 
-namespace AspNetCore.IPRestrictions.Endpoints;
+namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Middleware to restrict access based on IP address.

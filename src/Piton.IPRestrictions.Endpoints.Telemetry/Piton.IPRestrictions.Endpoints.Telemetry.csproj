@@ -8,13 +8,14 @@
 
         <IsPackable>true</IsPackable>
 
-        <PackageId>AspNetCore.IPRestrictions.Endpoints.Telemetry</PackageId>
-        <Description>OpenTelemetry instrumentation for AspNetCore.IPRestrictions.Endpoints: adds its metrics to a MeterProviderBuilder</Description>
-        <PackageTags>opentelemetry;metrics;ip-restrictions;aspnetcore</PackageTags>
+        <PackageId>Piton.IPRestrictions.Endpoints.Telemetry</PackageId>
+        <Description>OpenTelemetry instrumentation for Piton.IPRestrictions.Endpoints: adds its metrics to a MeterProviderBuilder</Description>
+        <!-- The shared IP tags (Directory.Build.props), plus telemetry -->
+        <PackageTags>$(PackageTags);opentelemetry;otel;metrics;telemetry;instrumentation</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AspNetCore.IPRestrictions.Endpoints\AspNetCore.IPRestrictions.Endpoints.csproj" />
+        <ProjectReference Include="..\Piton.IPRestrictions.Endpoints\Piton.IPRestrictions.Endpoints.csproj" />
     </ItemGroup>
     
     <!-- Native AOT for ASP.NET Core starts at .NET 8 -->

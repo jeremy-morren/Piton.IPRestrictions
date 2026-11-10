@@ -1,4 +1,4 @@
-﻿namespace AspNetCore.IPRestrictions.Endpoints;
+﻿namespace Piton.IPRestrictions.Endpoints;
 
 /// <summary>
 /// Known reverse proxies that set a custom header for the client IP address.

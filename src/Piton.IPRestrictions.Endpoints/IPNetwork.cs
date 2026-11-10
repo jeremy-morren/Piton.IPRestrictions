@@ -14,7 +14,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 
-namespace AspNetCore.IPRestrictions.Endpoints
+namespace Piton.IPRestrictions.Endpoints
 {
     /// <summary>
     /// Represents an IP network with an <see cref="IPAddress"/> containing the network prefix and an <see cref="int"/> defining the prefix length.
