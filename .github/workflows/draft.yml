@@ -31,90 +31,89 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
-      PACKAGE_ID: AspNetCore.IPRestrictions.Endpoints
     steps:
-      - name: Download the package
+      # The script that reads the packages
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Download the packages
         uses: actions/download-artifact@v8
         with:
           name: package
           path: package
 
-      # The package is the only thing that knows the version: version.props feeds it through MSBuild,
-      # and a stable build clears the suffix, so the file name is the one authority worth trusting.
-      - name: Read the version from the package
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          matches=()
-          for nupkg in package/"$PACKAGE_ID".*.nupkg; do
-            # What follows the id must be the version separator and a digit.
-            rest=$(basename "$nupkg" .nupkg)
-            rest=${rest#"$PACKAGE_ID".}
-            case "$rest" in [0-9]*) matches+=("$nupkg") ;; esac
-          done
-          if [ "${#matches[@]}" -ne 1 ]; then
-            echo "Expected exactly one $PACKAGE_ID package, found ${#matches[@]}:" >&2
-            for match in "${matches[@]}"; do echo "  $match" >&2; done
-            exit 1
-          fi
-          version=$(basename "${matches[0]}" .nupkg)
-          version=v${version#"$PACKAGE_ID".}
-          echo "Package version: $version"
-          echo "VERSION=$version" >> "$GITHUB_ENV"
+      # The packages are the only thing that knows the version: version.props feeds it through MSBuild,
+      # and a stable build clears the suffix, so each package's .nuspec is the one authority worth trusting.
+      # They must all agree, or the release would carry packages from different builds.
+      - name: Read the version from the packages
+        id: version
+        shell: pwsh
+        run: ./.github/scripts/GetPackageVersion.ps1 -Directory package
 
       - name: Look for an existing release
         id: existing
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          if draft=$(gh release view "$VERSION" --json isDraft --jq .isDraft 2>/dev/null); then
-            echo "Release $VERSION exists (draft: $draft)"
+          if draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+            echo "Release $TAG exists (draft: $draft)"
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "draft=$draft" >> "$GITHUB_OUTPUT"
           else
-            echo "No release $VERSION yet"
+            echo "No release $TAG yet"
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "draft=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Skip a published version
         if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.draft == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           {
             echo "### Release draft skipped"
             echo ""
-            echo "\`$VERSION\` is already published. Bump \`VersionPrefix\` in \`src/version.props\` to draft the next one."
+            echo "\`$TAG\` is already published. Bump \`VersionPrefix\` in \`src/version.props\` to draft the next one."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Replace the existing draft
+      # A draft has no tag until it is published, so --cleanup-tag would fail. The next step deletes any tag.
+      - name: Delete the existing draft
         if: steps.existing.outputs.draft == 'true'
-        run: gh release delete "$VERSION" --yes --cleanup-tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh release delete "$TAG" --yes
 
-      # A leftover tag (e.g. pushed by hand) would pin the new release to an old commit.
-      # Never reached for a published release, whose tag is left alone.
+      # Delete a leftover tag (e.g. pushed by hand, or a deleted release)
       - name: Delete the tag if it exists
         if: steps.existing.outputs.draft == 'true' || steps.existing.outputs.exists == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          if gh api "repos/$GH_REPO/git/ref/tags/$VERSION" --silent 2>/dev/null; then
-            echo "Deleting tag $VERSION"
-            gh api --method DELETE "repos/$GH_REPO/git/refs/tags/$VERSION"
+          if gh api "repos/$GH_REPO/git/ref/tags/$TAG" --silent 2>/dev/null; then
+            echo "Deleting tag $TAG"
+            gh api --method DELETE "repos/$GH_REPO/git/refs/tags/$TAG"
           else
-            echo "No tag $VERSION"
+            echo "No tag $TAG"
           fi
 
       - name: Create the draft release
         if: steps.existing.outputs.draft == 'true' || steps.existing.outputs.exists == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          gh release create "$VERSION" \
+          gh release create "$TAG" \
             --draft \
-            --title "$VERSION" \
+            --title "$TAG" \
             --generate-notes \
             --target "${{ github.sha }}" \
             package/*.nupkg
-          url=$(gh release view "$VERSION" --json url --jq .url)
+          url=$(gh release view "$TAG" --json url --jq .url)
           {
             echo "### Release draft ready"
             echo ""
-            echo "[$VERSION]($url) is drafted from \`${{ github.sha }}\`. Publishing it pushes the package to NuGet."
+            echo "Created release draft [$TAG]($url) from \`${{ github.sha }}\`."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -16,7 +16,7 @@
         <InternalsVisibleTo Include="AspNetCore.IPRestrictions.Tests"/>
     </ItemGroup>
 
-    <!-- Native AOT for ASP.NET Core starts at .NET 8, as does the configuration binding source generator -->
+    <!-- .NET8+: enable native AOT and configuration binding source generator -->
     <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
         <!-- Also sets IsTrimmable, and enables the trim, AOT and single-file analyzers -->
         <IsAotCompatible>true</IsAotCompatible>

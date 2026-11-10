@@ -25,12 +25,12 @@ public partial class IPRestrictionsOptions
     public List<string> AllowedIPs { get; set; } = [];
 
     /// <summary>
-    /// Whether to allow LAN IP addresses in addition to the specified AllowedIPs.
+    /// Whether to allow LAN IP addresses in addition to <see cref="AllowedIPs" />. Default is <see langword="false" />
     /// </summary>
     public bool AllowLanIPs { get; set; }
     
     /// <summary>
-    /// Whether to allow loopback IP addresses in addition to the specified AllowedIPs. Default is <see langword="true" />
+    /// Whether to allow loopback IP addresses in addition to <see cref="AllowedIPs" />. Default is <see langword="true" />
     /// </summary>
     public bool AllowLoopbackIPs { get; set; } = true;
 
@@ -46,6 +46,11 @@ public partial class IPRestrictionsOptions
     /// </summary>
     public string RemoteEndpointHeaderName { get; set; } = "X-Remote-Endpoint";
 
+    /// <summary>
+    /// Which metrics to record. By default, only denied requests are counted.
+    /// </summary>
+    public IPRestrictionsMetricsOptions Metrics { get; set; } = new();
+
     internal bool Validate()
     {
         if (Enabled != IPRestrictionMode.Disabled && 
@@ -58,7 +63,10 @@ public partial class IPRestrictionsOptions
         
         if (AllowedIPs == null)
             throw new Exception($"{GetType().Name}.{nameof(AllowedIPs)} cannot be null");
-        
+
+        if (Metrics == null)
+            throw new Exception($"{GetType().Name}.{nameof(Metrics)} cannot be null");
+
         return true;
     }
 

@@ -203,10 +203,7 @@ public class IPRestrictionsOptionsTests
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             => Entries.Add((logLevel, formatter(state, exception)));
 
-#if NET7_0_OR_GREATER
+        // OpenTelemetry brings Microsoft.Extensions.Logging.Abstractions 8.0 to every target, with the .NET 7+ signature
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-#else
-        public IDisposable BeginScope<TState>(TState state) => null!;
-#endif
     }
 }

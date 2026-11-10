@@ -1,8 +1,12 @@
 <Solution>
-  <Folder Name="/.github/">
+  <Folder Name="/.github/"/>
+  <Folder Name="/.github/workflows/">
     <File Path="../.github/workflows/ci.yml" />
     <File Path="../.github/workflows/draft.yml" />
     <File Path="../.github/workflows/release.yml" />
+  </Folder>
+  <Folder Name="/.github/scripts/">
+    <File Path="../.github/scripts/GetPackageVersion.ps1" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path="AspNetCore.IPRestrictions.snk" />
@@ -11,5 +15,6 @@
     <File Path="../README.md" />
   </Folder>
   <Project Path="AspNetCore.IPRestrictions.Endpoints/AspNetCore.IPRestrictions.Endpoints.csproj" />
+  <Project Path="AspNetCore.IPRestrictions.Endpoints.Telemetry/AspNetCore.IPRestrictions.Endpoints.Telemetry.csproj" />
   <Project Path="AspNetCore.IPRestrictions.Tests/AspNetCore.IPRestrictions.Tests.csproj" />
 </Solution>

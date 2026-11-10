@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(IPRestrictionsTargetFrameworks)</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>14</LangVersion>
+
+        <IsPackable>true</IsPackable>
+
+        <PackageId>AspNetCore.IPRestrictions.Endpoints.Telemetry</PackageId>
+        <Description>OpenTelemetry instrumentation for AspNetCore.IPRestrictions.Endpoints: adds its metrics to a MeterProviderBuilder</Description>
+        <PackageTags>opentelemetry;metrics;ip-restrictions;aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\AspNetCore.IPRestrictions.Endpoints\AspNetCore.IPRestrictions.Endpoints.csproj" />
+    </ItemGroup>
+    
+    <!-- Native AOT for ASP.NET Core starts at .NET 8 -->
+    <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
+
+    <!-- Open telemetry: 1.15.3 is available only from .NET 8 onwards -->
+    <PropertyGroup>
+        <OpenTelemetryVersion Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">1.15.3</OpenTelemetryVersion>
+        <OpenTelemetryVersion Condition="'$(OpenTelemetryVersion)' == ''">1.9.0</OpenTelemetryVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Suppress vulnerability. The first patched version 1.15.3 is only available for .NET 8+ -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-g94r-2vxg-569j" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="OpenTelemetry.Api" Version="$(OpenTelemetryVersion)" />
+        <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OpenTelemetryVersion)" />
+    </ItemGroup>
+
+</Project>

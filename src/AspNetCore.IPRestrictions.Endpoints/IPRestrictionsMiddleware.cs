@@ -19,13 +19,16 @@ namespace AspNetCore.IPRestrictions.Endpoints;
 internal partial class IPRestrictionsMiddleware : IMiddleware
 {
     private readonly IOptionsMonitor<IPRestrictionsOptions> _options;
+    private readonly IPRestrictionsInstrumentation _instrumentation;
     private readonly ILogger<IPRestrictionsMiddleware> _logger;
 
     public IPRestrictionsMiddleware(
         IOptionsMonitor<IPRestrictionsOptions> options,
+        IPRestrictionsInstrumentation instrumentation,
         ILogger<IPRestrictionsMiddleware> logger)
     {
         _options = options;
+        _instrumentation = instrumentation;
         _logger = logger;
     }
 
@@ -66,6 +69,9 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
             return next(context);
         }
 
+        // A request to an endpoint with IP restrictions, whether or not the predicate exempts it
+        _instrumentation.Request(options.Metrics, endpoint, remoteIp);
+
         if (predicate != null)
         {
             // Predicate is defined. If it returns false, ignore IP restriction
@@ -87,6 +93,7 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
         if (!IsAllowedIP(options, remoteIp, out var matchedAddress, out var matchedNetwork))
         {
             LogForbiddenRequestFromIP(remoteIp);
+            _instrumentation.Denied(options.Metrics, endpoint, remoteIp);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.Headers.ContentType = "text/plain";
             return context.Response.WriteAsync("Access denied", cancellationToken: context.RequestAborted);
@@ -103,7 +110,8 @@ internal partial class IPRestrictionsMiddleware : IMiddleware
             Debug.Assert(matchedNetwork != null && matchedNetwork.Value.Contains(remoteIp));
             LogRequestFromRemoteIPMatchedAllowedNetwork(remoteIp, Format(matchedNetwork.Value), displayName, path);
         }
-        
+
+        _instrumentation.Allowed(options.Metrics, endpoint, remoteIp);
         return next(context);
     }
 

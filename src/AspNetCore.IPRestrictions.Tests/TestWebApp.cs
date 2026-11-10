@@ -81,6 +81,11 @@ public class TestWebApp : IAsyncDisposable
 
     public ValueTask DisposeAsync() => _app.DisposeAsync();
 
+    /// <summary>
+    /// The application's services.
+    /// </summary>
+    public IServiceProvider Services => _app.Services;
+
     public HttpClient CreateClient()
     {
         lock (_app)

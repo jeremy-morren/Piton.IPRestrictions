@@ -63,7 +63,7 @@ jobs:
           reports: ${{ env.results }}/**/*.cobertura.xml
           targetdir: ${{ env.coverage }}
           reporttypes: MarkdownSummaryGithub;Cobertura
-          assemblyfilters: +AspNetCore.IPRestrictions.Endpoints
+          assemblyfilters: +AspNetCore.IPRestrictions.Endpoints*
           filefilters: -*.g.cs
           title: Code coverage
 

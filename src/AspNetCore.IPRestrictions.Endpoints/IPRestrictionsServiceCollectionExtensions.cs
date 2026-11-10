@@ -45,6 +45,12 @@ public static class IPRestrictionsServiceCollectionExtensions
                     o.ParseIPAddresses(sp.GetService<ILogger<IPRestrictionsOptions>>()));
 
             services.AddTransient<IPRestrictionsMiddleware>();
+
+#if NET8_0_OR_GREATER
+            // IMeterFactory: the ASP.NET Core host registers it, but a bare service collection may not
+            services.AddMetrics();
+#endif
+            services.AddSingleton<IPRestrictionsInstrumentation>();
         }
     }
 

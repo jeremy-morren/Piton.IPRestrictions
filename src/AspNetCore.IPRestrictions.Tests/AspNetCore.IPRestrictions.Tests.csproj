@@ -13,6 +13,21 @@
 
     <ItemGroup>
         <ProjectReference Include="..\AspNetCore.IPRestrictions.Endpoints\AspNetCore.IPRestrictions.Endpoints.csproj" />
+        <ProjectReference Include="..\AspNetCore.IPRestrictions.Endpoints.Telemetry\AspNetCore.IPRestrictions.Endpoints.Telemetry.csproj" />
+    </ItemGroup>
+
+    <!-- The patched OpenTelemetry (GHSA-g94r-2vxg-569j) where available: as in the Telemetry project -->
+    <PropertyGroup>
+        <OpenTelemetryVersion Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">1.15.3</OpenTelemetryVersion>
+        <OpenTelemetryVersion Condition="'$(OpenTelemetryVersion)' == ''">1.9.0</OpenTelemetryVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-g94r-2vxg-569j" />
+        <PackageReference Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
+        <PackageReference Include="OpenTelemetry.Exporter.InMemory" Version="$(OpenTelemetryVersion)" />
+        <!-- services.AddOpenTelemetry(), for AddIPRestrictionsInstrumentation(configure) -->
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
     </ItemGroup>
 
     <ItemGroup>
@@ -36,13 +51,14 @@
         <DotnetPackageVersion>8.0.33</DotnetPackageVersion>
         <ExtensionsPackageVersion>8.0.2</ExtensionsPackageVersion>
     </PropertyGroup>
+    <!-- Extensions 8.0 on net6.0/net7.0: OpenTelemetry 1.9.0 depends on Microsoft.Extensions.* 8.0 (a lower version is a downgrade error) -->
     <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
         <DotnetPackageVersion>7.0.20</DotnetPackageVersion>
-        <ExtensionsPackageVersion>7.0.4</ExtensionsPackageVersion>
+        <ExtensionsPackageVersion>8.0.2</ExtensionsPackageVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
         <DotnetPackageVersion>6.0.20</DotnetPackageVersion>
-        <ExtensionsPackageVersion>6.0.1</ExtensionsPackageVersion>
+        <ExtensionsPackageVersion>8.0.2</ExtensionsPackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
