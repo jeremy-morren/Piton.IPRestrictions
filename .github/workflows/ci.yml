@@ -18,8 +18,7 @@ jobs:
       cancel-in-progress: true
     permissions:
       contents: read
-      # publish-unit-test-result-action writes a check run and, on a pull request, a comment.
-      checks: write
+      # publish-unit-test-result-action comments the test results on a pull request.
       pull-requests: write
     env:
       results: src/artifacts/test-results
@@ -54,14 +53,15 @@ jobs:
           --logger trx
           --results-directory "${{ env.results }}"
 
-      # Writes the test summary to the job summary (before the coverage summary), a check run,
-      # and a pull request comment it edits on each run.
+      # Comments the test results on the pull request (edited on each run), and nowhere else.
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         with:
           check_name: Test results
           files: ${{ env.results }}/**/*.trx
+          check_run: false
+          job_summary: false
 
       # Merges the per-framework reports. The collector covers every module with symbols, so the report
       # keeps the library only, and drops source-generated files (e.g. the logging generator's).
@@ -76,17 +76,10 @@ jobs:
           filefilters: -*.g.cs
           title: Code coverage
 
+      # The coverage goes to the job summary only.
       - name: Coverage summary
         if: ${{ !cancelled() }}
         run: cat "${{ env.coverage }}/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Comment coverage on the pull request
-        uses: marocchino/sticky-pull-request-comment@v3
-        # A pull request from a fork gets a read-only token, so there is nothing to comment with.
-        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
-        with:
-          header: coverage
-          path: ${{ env.coverage }}/SummaryGithub.md
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
